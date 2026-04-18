@@ -4,719 +4,965 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="theme-color" content="#080f18">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>ঘরের স্বাদ</title>
-<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
-:root{
-  --bg:#080f18;--card:#0e1c2b;--card2:#132233;--border:#1a3347;
-  --gold:#f0b429;--blue:#3b9eff;--green:#34d399;--red:#f87171;
-  --purple:#a78bfa;--text:#e2eaf4;--muted:#4a6a88;
-  --morning:#fbbf24;--noon:#34d399;--night:#818cf8;
-}
+/* ── SETUP ── */
+#setup-screen{position:fixed;inset:0;background:#080f18;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;font-family:'Hind Siliguri',sans-serif;overflow-y:auto;}
+.setup-box{background:#0e1c2b;border:1px solid #1a3347;border-radius:20px;padding:24px;width:100%;max-width:440px;}
+.setup-logo{text-align:center;font-size:36px;margin-bottom:6px;}
+.setup-title{text-align:center;font-size:20px;font-weight:800;color:#f0b429;margin-bottom:4px;}
+.setup-sub{text-align:center;font-size:12px;color:#4a6a88;margin-bottom:18px;}
+.setup-step{background:#132233;border-radius:12px;padding:12px 14px;margin-bottom:10px;border-left:3px solid #3b9eff;}
+.setup-step-num{font-size:11px;color:#3b9eff;font-weight:700;margin-bottom:4px;}
+.setup-step-text{font-size:13px;color:#e2eaf4;line-height:1.65;}
+.setup-step a{color:#f0b429;}
+.s-inp{width:100%;background:#080f18;border:1px solid #1a3347;border-radius:10px;padding:10px 12px;color:#e2eaf4;font-size:13px;font-family:'Hind Siliguri',sans-serif;margin-top:6px;}
+.s-inp::placeholder{color:#4a6a88;}
+.s-inp:focus{outline:none;border-color:#3b9eff;}
+.setup-btn{width:100%;background:linear-gradient(135deg,#1a6fd4,#3b9eff);border:none;border-radius:12px;padding:13px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:'Hind Siliguri',sans-serif;margin-top:12px;}
+.setup-err{color:#f87171;font-size:12px;text-align:center;margin-top:8px;display:none;}
+/* ── MAIN ── */
+:root{--bg:#080f18;--card:#0e1c2b;--card2:#132233;--border:#1a3347;--gold:#f0b429;--blue:#3b9eff;--green:#34d399;--red:#f87171;--text:#e2eaf4;--muted:#4a6a88;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-body{font-family:'Hind Siliguri',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:480px;margin:0 auto;padding-bottom:80px;}
+body{font-family:'Hind Siliguri',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:480px;margin:0 auto;padding-bottom:74px;}
 input,select,button,textarea{font-family:inherit;}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue)!important;}
 ::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
-button:active{opacity:.75;transform:scale(.97);}
-input[type=number]{-moz-appearance:textfield;}
-input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+button:active{opacity:.75;transform:scale(.96);}
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-@keyframes spin{to{transform:rotate(360deg)}}
-.anim{animation:fadeUp .25s ease;}
-
-#header{background:linear-gradient(135deg,#060e1a,#0c1e35);padding:15px 18px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50;}
-.logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--gold),#c06000);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 4px 14px rgba(240,180,41,.3);}
-.header-text .title{font-weight:800;font-size:16px;}
-.header-text .sub{font-size:11px;color:var(--muted);margin-top:1px;display:flex;align-items:center;gap:5px;}
-.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);transition:background .4s;flex-shrink:0;}
-.sync-dot.ok{background:var(--green);}.sync-dot.syncing{background:var(--gold);animation:spin 1s linear infinite;}.sync-dot.err{background:var(--red);}
-.mode-badge{margin-left:auto;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer;}
-.mode-badge.admin{background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.35);color:var(--purple);}
-.mode-badge.view{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.25);color:var(--green);}
-
-.full-screen{position:fixed;inset:0;background:var(--bg);z-index:400;display:none;align-items:center;justify-content:center;padding:24px;flex-direction:column;gap:16px;}
-.full-screen.show{display:flex;}
-.screen-logo{width:60px;height:60px;border-radius:18px;background:linear-gradient(135deg,var(--gold),#c06000);display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 6px 20px rgba(240,180,41,.3);}
-.spinner{width:30px;height:30px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;}
-
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.anim{animation:fadeUp .22s ease;}.fadein{animation:fadeIn .18s ease;}.slide{animation:slideUp .3s cubic-bezier(.32,.72,0,1);}
+/* Header */
+#header{background:linear-gradient(135deg,#060e1a,#0c1e35);padding:14px 18px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50;}
+.logo-box{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--gold),#c06000);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;box-shadow:0 4px 14px rgba(240,180,41,.3);}
+.htitle{font-weight:700;font-size:15px;}.hsub{font-size:10px;color:var(--muted);}
+#sync-dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-left:5px;}
+#sync-dot.syncing{background:var(--gold);animation:pulse 1s infinite;}
+#sync-dot.offline{background:var(--red);}
+.month-badge{margin-left:auto;background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.28);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--gold);font-weight:600;white-space:nowrap;}
+/* Nav */
 #nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#060d18;border-top:1px solid var(--border);display:flex;z-index:100;}
-.nav-btn{flex:1;border:none;background:none;padding:10px 0 8px;cursor:pointer;color:var(--muted);transition:color .2s;position:relative;}
+.nav-btn{flex:1;border:none;background:none;padding:9px 0 7px;cursor:pointer;color:var(--muted);transition:color .2s;position:relative;}
 .nav-btn.active{color:var(--gold);}
-.nav-bar{position:absolute;top:0;left:50%;transform:translateX(-50%);width:28px;height:2px;background:var(--gold);border-radius:0 0 3px 3px;display:none;}
+.nav-bar{position:absolute;top:0;left:50%;transform:translateX(-50%);width:26px;height:2px;background:var(--gold);border-radius:0 0 3px 3px;display:none;}
 .nav-btn.active .nav-bar{display:block;}
-.nav-icon{font-size:20px;}.nav-label{font-size:10px;margin-top:2px;}.nav-btn.active .nav-label{font-weight:700;}
-
-#content{padding:14px 14px 0;}.tab{display:none;}.tab.active{display:block;}
-.gcard{background:var(--card);border-radius:16px;padding:14px;border:1px solid var(--border);margin-bottom:10px;}
-.gcard-title{font-weight:700;font-size:13px;color:var(--blue);margin-bottom:10px;}
+.nav-icon{font-size:18px;}.nav-label{font-size:10px;margin-top:1px;font-weight:400;}
+.nav-btn.active .nav-label{font-weight:700;}
+/* Content */
+#content{padding:12px 14px 0;}
+.tab-pane{display:none;}.tab-pane.active{display:block;}
+/* Cards */
+.gcard{background:var(--card);border-radius:16px;padding:13px;border:1px solid var(--border);display:flex;flex-direction:column;gap:8px;margin-bottom:10px;}
+.gcard-title{font-weight:700;font-size:13px;color:var(--blue);}
+/* Inputs */
 .inp{width:100%;background:#0a1525;border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);font-size:14px;transition:border-color .2s;}
-.inp::placeholder{color:var(--muted);}.inp:disabled{opacity:.5;cursor:not-allowed;}
-.label{font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600;}.field{margin-bottom:10px;}
-
-/* Meal time */
-.mealtime-group{display:flex;gap:6px;}
-.mt-btn{flex:1;border:1px solid var(--border);background:#0a1525;border-radius:10px;padding:9px 4px;cursor:pointer;text-align:center;font-weight:700;color:var(--muted);transition:all .18s;display:flex;flex-direction:column;align-items:center;gap:2px;}
-.mt-btn .mt-icon{font-size:18px;}.mt-btn .mt-label{font-size:11px;}
-.mt-btn.morning.active{background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.5);color:var(--morning);}
-.mt-btn.noon.active{background:rgba(52,211,153,.12);border-color:rgba(52,211,153,.5);color:var(--noon);}
-.mt-btn.night.active{background:rgba(129,140,248,.12);border-color:rgba(129,140,248,.5);color:var(--night);}
-.mt-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;border-radius:6px;padding:2px 7px;}
-.mt-badge.morning{background:rgba(251,191,36,.12);color:var(--morning);}
-.mt-badge.noon{background:rgba(52,211,153,.12);color:var(--noon);}
-.mt-badge.night{background:rgba(129,140,248,.12);color:var(--night);}
-
-.btn{border:1px solid;border-radius:12px;padding:12px 16px;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s,transform .1s;width:100%;text-align:center;}
+.inp::placeholder{color:var(--muted);}
+/* Buttons */
+.btn{border:1px solid;border-radius:12px;padding:11px 14px;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .2s,transform .1s;width:100%;text-align:center;display:block;}
 .btn-blue{background:linear-gradient(135deg,#1a6fd4,var(--blue));color:#fff;border-color:var(--blue);}
 .btn-gold{background:rgba(240,180,41,.12);color:var(--gold);border-color:rgba(240,180,41,.35);}
+.btn-green{background:rgba(52,211,153,.12);color:var(--green);border-color:rgba(52,211,153,.35);}
+.btn-red{background:rgba(248,113,113,.1);color:var(--red);border-color:rgba(248,113,113,.3);}
+.btn-share{background:linear-gradient(135deg,#0d3a6e,#1a6fd4);color:#fff;border-color:var(--blue);}
 .btn-ghost{background:transparent;color:var(--muted);border-color:var(--border);}
-.btn-green{background:linear-gradient(135deg,#059669,var(--green));color:#fff;border-color:var(--green);}
-.btn-row{display:flex;gap:8px;}.btn-row .btn{flex:1;}.btn:disabled{opacity:.45;cursor:not-allowed;}
-
-.pills{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;}
-.pill{border-radius:12px;padding:10px 8px;text-align:center;}.pill-val{font-size:15px;font-weight:800;}.pill-label{font-size:10px;color:var(--muted);margin-top:2px;}
-
-.person-card{background:var(--card);border-radius:14px;padding:12px 14px;border:1px solid var(--border);display:flex;align-items:center;gap:10px;cursor:pointer;transition:border-color .2s;margin-bottom:8px;}
-.person-card:hover{border-color:var(--blue);}
-.p-avatar{width:38px;height:38px;border-radius:11px;background:rgba(59,158,255,.12);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:var(--blue);flex-shrink:0;}
-.p-info{flex:1;min-width:0;}.p-name{font-weight:700;font-size:14px;}
-.p-meta{font-size:11px;color:var(--muted);margin-top:2px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
-
-.sum-head{display:grid;grid-template-columns:1fr 60px 90px;padding:5px 6px;border-bottom:1px solid var(--border);margin-bottom:4px;}
-.sum-head span{font-size:11px;color:var(--muted);font-weight:700;}
-.sum-head span:nth-child(2),.sum-head span:nth-child(3){text-align:center;}
-.sum-row{display:grid;grid-template-columns:1fr 60px 90px;align-items:center;padding:8px 6px;border-radius:8px;cursor:pointer;transition:background .2s;}
-.sum-row:hover{background:rgba(59,158,255,.06);}
-.sum-row:nth-child(odd){background:rgba(255,255,255,.02);}
-.sum-name{font-weight:600;font-size:13px;}.sum-phone{font-size:10px;color:var(--muted);}
-.sum-qty{text-align:center;font-weight:700;font-size:13px;color:var(--blue);}
-.sum-amt{text-align:center;font-weight:700;font-size:13px;color:var(--gold);}
-.sum-total{display:grid;grid-template-columns:1fr 60px 90px;align-items:center;padding:8px 6px;border-top:1px solid var(--border);margin-top:4px;}
-.sum-total-label{font-weight:700;font-size:12px;color:var(--muted);}
-.sum-total-qty{text-align:center;font-weight:800;font-size:14px;color:var(--blue);}
-.sum-total-amt{text-align:center;font-weight:800;font-size:14px;color:var(--gold);}
-
-.empty{text-align:center;color:var(--muted);font-size:13px;padding:28px 0;background:var(--card);border-radius:14px;border:1px solid var(--border);margin-bottom:8px;}
-
-#toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#0c1e35;color:var(--text);padding:10px 22px;border-radius:24px;font-size:13px;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,.5);border:1px solid var(--border);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .3s;}
-#toast.show{opacity:1;}
-
-/* Main modal */
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.btn-sm{padding:7px 12px;font-size:12px;border-radius:9px;width:auto;display:inline-block;}
+.btn-row{display:flex;gap:8px;}.btn-row .btn{flex:1;}
+/* Pills */
+.pills{display:flex;gap:6px;}
+.pill{flex:1;border-radius:10px;padding:8px 5px;text-align:center;}
+.pill-val{font-size:13px;font-weight:800;}.pill-label{font-size:10px;color:var(--muted);margin-top:1px;}
+/* Customer list */
+.cust-item{background:var(--card);border-radius:14px;padding:12px 13px;border:1px solid var(--border);display:flex;align-items:center;gap:9px;cursor:pointer;transition:border-color .2s;margin-bottom:8px;}
+.cust-item:hover{border-color:var(--blue);}
+.icon-btn{border:none;border-radius:8px;padding:6px 8px;cursor:pointer;font-size:13px;}
+/* Daily */
+.daily-item{border-radius:14px;padding:10px 13px;border:1px solid var(--border);display:flex;align-items:center;gap:9px;transition:all .2s;margin-bottom:6px;}
+.daily-item.has-entry{background:#091d12;border-color:rgba(52,211,153,.3);}
+.daily-item:not(.has-entry){background:var(--card);}
+.qty-ctrl{display:flex;align-items:center;gap:5px;}
+.qty-btn{width:28px;height:28px;border-radius:8px;border:none;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;}
+.qty-minus{background:rgba(59,158,255,.1);color:var(--blue);}
+.qty-plus{background:var(--blue);color:#fff;}
+.qty-input{width:42px;text-align:center;background:#0a1525;border:1px solid var(--border);border-radius:8px;padding:5px 3px;color:var(--text);font-size:15px;font-weight:800;transition:border-color .2s;font-family:inherit;}
+/* Monthly */
+.month-item{background:var(--card);border-radius:14px;padding:11px 13px;border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:9px;transition:border-color .2s;margin-bottom:6px;}
+.month-item:hover{border-color:var(--gold);}
+/* Empty */
+.empty{text-align:center;color:var(--muted);font-size:13px;padding:24px 0;background:var(--card);border-radius:14px;border:1px solid var(--border);margin-bottom:8px;}
+/* Toast */
+#toast{position:fixed;top:68px;left:50%;transform:translateX(-50%);background:#0c1e35;color:var(--text);padding:9px 20px;border-radius:22px;font-size:13px;z-index:999;box-shadow:0 8px 28px rgba(0,0,0,.5);border:1px solid var(--border);white-space:nowrap;display:none;}
+/* Modal */
 #modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:200;display:none;align-items:flex-end;justify-content:center;}
 #modal-overlay.open{display:flex;}
-#modal{width:100%;max-width:480px;background:var(--bg);border-radius:22px 22px 0 0;max-height:92vh;overflow:hidden;display:flex;flex-direction:column;animation:slideUp .3s cubic-bezier(.32,.72,0,1);}
-#modal-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-#modal-header .mh-title{font-weight:700;font-size:15px;}
-#modal-body{flex:1;overflow-y:auto;padding:14px;}
-.close-btn{background:rgba(255,255,255,.06);border:none;color:var(--muted);font-size:18px;cursor:pointer;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;}
-
-/* Edit modal */
-#edit-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;display:none;align-items:flex-end;justify-content:center;}
-#edit-overlay.open{display:flex;}
-#edit-modal{width:100%;max-width:480px;background:var(--bg);border-radius:22px 22px 0 0;padding:20px;animation:slideUp .28s cubic-bezier(.32,.72,0,1);}
-#edit-modal h3{font-size:15px;font-weight:800;margin-bottom:16px;color:var(--blue);}
-
-/* Note popup */
-#note-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;display:none;align-items:center;justify-content:center;padding:20px;}
-#note-overlay.open{display:flex;}
-#note-popup{width:100%;max-width:420px;background:var(--card);border-radius:18px;padding:20px;border:1px solid var(--border);}
-#note-popup h3{font-size:14px;font-weight:800;color:var(--blue);margin-bottom:4px;}
-#note-popup .note-date{font-size:11px;color:var(--muted);margin-bottom:12px;}
-#note-popup .note-text{font-size:14px;line-height:1.8;color:var(--text);background:#060d18;border-radius:10px;padding:12px;min-height:60px;}
-
-/* Entry card in modal */
-.entry-card{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:11px 12px;margin-bottom:7px;transition:border-color .2s;}
-.entry-card:hover{border-color:rgba(59,158,255,.3);}
-.entry-card-top{display:flex;align-items:center;gap:8px;}
-.entry-card-info{flex:1;min-width:0;}
-.entry-card-date{font-size:12px;color:var(--muted);font-weight:600;}
-.entry-card-nums{display:flex;align-items:center;gap:10px;margin-top:3px;}
-.entry-card-qty{font-size:14px;font-weight:800;color:var(--blue);}
-.entry-card-amt{font-size:13px;font-weight:700;color:var(--gold);}
-.entry-card-actions{display:flex;gap:5px;flex-shrink:0;}
-.eact-btn{border:none;border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;}
-.eact-edit{background:rgba(59,158,255,.12);color:var(--blue);}
-.eact-del{background:rgba(248,113,113,.1);color:var(--red);}
-.entry-card-note{margin-top:7px;font-size:12px;color:var(--muted);background:#060d18;border-radius:7px;padding:7px 10px;cursor:pointer;display:flex;align-items:center;gap:5px;border:1px solid transparent;transition:border-color .2s;}
-.entry-card-note:hover{border-color:var(--border);}
-.note-icon{font-size:12px;}
-
-/* Export */
-.export-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:14px;}
-.exp-btn{border:1px solid var(--border);background:var(--card);border-radius:11px;padding:9px 4px;cursor:pointer;text-align:center;font-size:11px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:3px;transition:border-color .18s,background .18s;}
-.exp-btn:hover{background:var(--card2);}.exp-btn .ei{font-size:20px;}
-.exp-btn.epng{border-color:rgba(59,158,255,.35);color:var(--blue);}
-.exp-btn.epdf{border-color:rgba(248,113,113,.35);color:var(--red);}
-.exp-btn.ecsv{border-color:rgba(52,211,153,.35);color:var(--green);}
-
-/* Hidden export card */
-#export-card{position:fixed;left:-9999px;top:20px;width:420px;padding:26px;background:#080f18;font-family:'Hind Siliguri',sans-serif;color:#e2eaf4;border-radius:18px;border:1px solid #1a3347;}
-#export-card .ech{display:flex;align-items:center;gap:13px;margin-bottom:18px;padding-bottom:15px;border-bottom:1px solid #1a3347;}
-#export-card .eclogo{width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#f0b429,#c06000);display:flex;align-items:center;justify-content:center;font-size:23px;flex-shrink:0;}
-#export-card .ect{font-size:18px;font-weight:800;}.#export-card .ecs{font-size:12px;color:#4a6a88;margin-top:3px;}
-#export-card .ecpills{display:flex;gap:10px;margin-bottom:18px;}
-#export-card .ecp{flex:1;border-radius:11px;padding:11px 8px;text-align:center;}
-#export-card .ecpv{font-size:17px;font-weight:800;}.#export-card .ecpl{font-size:10px;color:#4a6a88;margin-top:3px;}
-#export-card table{width:100%;border-collapse:collapse;}
-#export-card thead th{font-size:11px;color:#4a6a88;font-weight:700;padding:6px 8px;text-align:left;border-bottom:1px solid #1a3347;}
-#export-card thead th:not(:first-child){text-align:center;}
-#export-card tbody td{font-size:12px;padding:8px 8px;border-bottom:1px solid rgba(26,51,71,.4);}
-#export-card tbody td:not(:first-child){text-align:center;}
-#export-card tfoot td{font-size:13px;font-weight:800;padding:10px 8px;border-top:1px solid #1a3347;color:#f0b429;}
-#export-card tfoot td:not(:first-child){text-align:center;}
-#export-card .ecf{margin-top:15px;padding-top:11px;border-top:1px solid #1a3347;display:flex;justify-content:space-between;font-size:10px;color:#4a6a88;}
-
-/* Login */
-#login-screen{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:350;align-items:center;justify-content:center;padding:24px;}
-#login-screen.show{display:flex;}
-.login-box{background:var(--card);border-radius:20px;padding:28px 24px;border:1px solid var(--border);width:100%;max-width:360px;animation:fadeUp .3s ease;}
-@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
-.login-logo{width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--gold),#c06000);display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 16px;}
-.login-title{text-align:center;font-weight:800;font-size:18px;margin-bottom:4px;}
-.login-sub{text-align:center;font-size:12px;color:var(--muted);margin-bottom:22px;}
-.admin-notice{background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2);border-radius:12px;padding:10px 13px;font-size:12px;color:var(--purple);margin-bottom:10px;}
-.search-wrap{position:relative;margin-bottom:10px;}.search-wrap .inp{padding-left:36px;}
-.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--muted);}
-.sec-label{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px;margin-top:4px;text-transform:uppercase;letter-spacing:.5px;}
-.month-select-wrap{display:flex;gap:8px;margin-bottom:12px;}.month-select-wrap .inp{flex:1;}
+#modal{width:100%;max-width:480px;background:var(--bg);border-radius:22px 22px 0 0;max-height:92vh;overflow:hidden;display:flex;flex-direction:column;}
+#modal-header{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;}
+#modal-body{flex:1;overflow-y:auto;padding:13px;}
+/* Export modal */
+#export-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:300;display:none;align-items:flex-end;justify-content:center;}
+#export-overlay.open{display:flex;}
+#export-modal{width:100%;max-width:480px;background:var(--bg);border-radius:22px 22px 0 0;max-height:90vh;overflow-y:auto;padding:20px;}
+/* DL Card */
+.dl-card{background:linear-gradient(160deg,#080f18,#0c1e35);border-radius:18px;padding:16px;border:1px solid var(--border);}
+.dl-card-header{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+.dl-logo{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,var(--gold),#b05500);display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0;}
+.dl-card-footer{margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:10px;color:var(--muted);}
+/* Table styles */
+.tbl-head{display:grid;padding:5px 5px;margin-bottom:2px;gap:4px;}
+.tbl-head span{font-size:10px;color:var(--muted);font-weight:700;}
+.tbl-row{display:grid;align-items:center;padding:7px 5px;border-radius:5px;gap:4px;}
+.tbl-row:nth-child(odd){background:rgba(255,255,255,.025);}
+.tbl-total{display:grid;align-items:center;padding:10px 5px;margin-top:8px;border-top:1px solid var(--border);background:rgba(240,180,41,.06);border-radius:8px;gap:4px;}
+/* Checkbox */
+.cb-item{display:flex;align-items:center;gap:10px;padding:10px 13px;background:var(--card);border-radius:12px;border:1px solid var(--border);margin-bottom:7px;cursor:pointer;}
+.cb-item.selected{border-color:var(--blue);background:rgba(59,158,255,.06);}
+.cb-box{width:20px;height:20px;border-radius:6px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.cb-item.selected .cb-box{background:var(--blue);border-color:var(--blue);}
+/* Section divider */
+.section-sep{font-size:11px;font-weight:700;color:var(--muted);padding:10px 0 6px;letter-spacing:.5px;text-transform:uppercase;}
+/* Badge */
+.badge{display:inline-block;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;}
+.badge-blue{background:rgba(59,158,255,.15);color:var(--blue);}
+.badge-gold{background:rgba(240,180,41,.15);color:var(--gold);}
+.badge-green{background:rgba(52,211,153,.15);color:var(--green);}
+.badge-red{background:rgba(248,113,113,.15);color:var(--red);}
 </style>
 </head>
 <body>
 
-<div id="loading-screen" class="full-screen show">
-  <div class="screen-logo">🍱</div><div class="spinner"></div>
-  <div style="font-size:13px;color:var(--muted);">লোড হচ্ছে...</div>
-</div>
-
-<div id="login-screen">
-  <div class="login-box">
-    <div class="login-logo">🍱</div>
-    <div class="login-title">ঘরের স্বাদ</div>
-    <div class="login-sub">Admin প্যানেলে প্রবেশ করুন</div>
-    <div class="field">
-      <div class="label">পাসওয়ার্ড</div>
-      <input type="password" class="inp" id="pw-input" placeholder="পাসওয়ার্ড লিখুন..." onkeydown="if(event.key==='Enter')doLogin()">
+<!-- SETUP SCREEN -->
+<div id="setup-screen">
+  <div class="setup-box">
+    <div class="setup-logo">🍱</div>
+    <div class="setup-title">ঘরের স্বাদ</div>
+    <div class="setup-sub">Firebase সেটআপ করুন — একবারই করতে হবে</div>
+    <div class="setup-step">
+      <div class="setup-step-num">ধাপ ১</div>
+      <div class="setup-step-text"><a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> → Gmail লগইন → <b>Add project</b> → নাম: <b>ghorersad</b> → Continue ×২ → Create</div>
     </div>
-    <button class="btn btn-blue" onclick="doLogin()">প্রবেশ করুন</button>
-    <button class="btn btn-ghost" style="margin-top:8px;" onclick="closeLogin()">বাতিল</button>
+    <div class="setup-step">
+      <div class="setup-step-num">ধাপ ২</div>
+      <div class="setup-step-text">বাম মেনু: <b>Build → Realtime Database → Create Database</b> → us-central1 → <b>Start in test mode</b> → Enable</div>
+    </div>
+    <div class="setup-step">
+      <div class="setup-step-num">ধাপ ৩</div>
+      <div class="setup-step-text">⚙️ <b>Project Settings</b> → <b>Your apps</b> → <b>&lt;/&gt;</b> → App name: ghorersad → Register → নিচে <code>firebaseConfig</code> থেকে তথ্য কপি করুন</div>
+    </div>
+    <label style="font-size:12px;color:#4a6a88;display:block;margin-top:10px;margin-bottom:3px;">API Key</label>
+    <input class="s-inp" id="s-apikey" placeholder="AIzaSy...">
+    <label style="font-size:12px;color:#4a6a88;display:block;margin-top:8px;margin-bottom:3px;">Database URL</label>
+    <input class="s-inp" id="s-dburl" placeholder="https://ghorersad-default-rtdb.firebaseio.com">
+    <label style="font-size:12px;color:#4a6a88;display:block;margin-top:8px;margin-bottom:3px;">Project ID</label>
+    <input class="s-inp" id="s-projectid" placeholder="ghorersad-xxxxx">
+    <button class="setup-btn" onclick="saveConfig()">✅ সেটআপ সম্পন্ন করুন</button>
+    <div class="setup-err" id="setup-err">সঠিক তথ্য দিন</div>
+    <div style="text-align:center;margin-top:14px;font-size:12px;color:#4a6a88;">আগে করা থাকলে → <button onclick="loadConfig()" style="background:none;border:none;color:#3b9eff;cursor:pointer;font-size:12px;font-family:inherit;text-decoration:underline;">এখানে চাপুন</button></div>
   </div>
 </div>
 
+<!-- MAIN APP -->
+<div id="app" style="display:none;">
 <div id="header">
-  <div class="logo">🍱</div>
-  <div class="header-text">
-    <div class="title">ঘরের স্বাদ</div>
-    <div class="sub"><div class="sync-dot" id="sync-dot"></div><span id="sync-label">সংযুক্ত হচ্ছে...</span></div>
-  </div>
-  <div class="mode-badge view" id="mode-badge" onclick="handleModeClick()">👁️ দেখুন</div>
+  <div class="logo-box">🍱</div>
+  <div><div class="htitle">ঘরের স্বাদ <span id="sync-dot"></span></div><div class="hsub" id="sync-label">সংযুক্ত হচ্ছে...</div></div>
+  <div class="month-badge" id="header-month"></div>
 </div>
-
-<div id="content">
-  <!-- HOME -->
-  <div class="tab active anim" id="tab-home">
-    <div id="home-admin-notice" class="admin-notice" style="display:none;">🔐 Admin Mode চালু</div>
-    <div class="pills">
-      <div class="pill" style="background:rgba(59,158,255,.1);border:1px solid rgba(59,158,255,.15);">
-        <div class="pill-val" style="color:var(--blue);" id="stat-persons">0</div><div class="pill-label">জন</div>
-      </div>
-      <div class="pill" style="background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.15);">
-        <div class="pill-val" style="color:var(--green);" id="stat-meals">0</div><div class="pill-label">খাবার</div>
-      </div>
-      <div class="pill" style="background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.15);">
-        <div class="pill-val" style="color:var(--gold);" id="stat-bill">৳0</div><div class="pill-label">মোট বিল</div>
-      </div>
-    </div>
-    <div class="month-select-wrap">
-      <select class="inp" id="home-month-sel" onchange="renderHome()"></select>
-    </div>
-    <div id="add-entry-card" class="gcard" style="display:none;">
-      <div class="gcard-title">➕ নতুন এন্ট্রি যোগ করুন</div>
-      <div class="field">
-        <div class="label">ব্যক্তি</div>
-        <select class="inp" id="entry-person-sel"><option value="">-- বেছে নিন --</option></select>
-      </div>
-      <div class="field">
-        <div class="label">তারিখ</div>
-        <input type="date" class="inp" id="entry-date">
-      </div>
-      <div class="field">
-        <div class="label">খাবারের সময়</div>
-        <div class="mealtime-group">
-          <button type="button" class="mt-btn morning active" id="mt-morning" onclick="selectMealTime('morning')"><span class="mt-icon">🌅</span><span class="mt-label">সকাল</span></button>
-          <button type="button" class="mt-btn noon" id="mt-noon" onclick="selectMealTime('noon')"><span class="mt-icon">☀️</span><span class="mt-label">দুপুর</span></button>
-          <button type="button" class="mt-btn night" id="mt-night" onclick="selectMealTime('night')"><span class="mt-icon">🌙</span><span class="mt-label">রাত</span></button>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <div class="field">
-          <div class="label">খাবারের সংখ্যা</div>
-          <input type="text" inputmode="numeric" class="inp" id="entry-qty" placeholder="1" oninput="calcTotal()">
-        </div>
-        <div class="field">
-          <div class="label">প্রতি খাবারের দাম (৳)</div>
-          <input type="text" inputmode="decimal" class="inp" id="entry-unit-price" placeholder="৬০" oninput="calcTotal()">
-        </div>
-      </div>
-      <div id="entry-total-preview" style="display:none;background:rgba(240,180,41,.08);border:1px solid rgba(240,180,41,.25);border-radius:10px;padding:10px 14px;margin-bottom:10px;display:none;justify-content:space-between;align-items:center;">
-        <span style="font-size:13px;color:var(--muted);">মোট টাকা</span>
-        <span style="font-size:18px;font-weight:800;color:var(--gold);" id="entry-total-val">৳০</span>
-      </div>
-      <div class="field">
-        <div class="label">বিস্তারিত / নোট (ঐচ্ছিক)</div>
-        <textarea class="inp" id="entry-note" placeholder="যেকোনো তথ্য লিখুন..." rows="2" style="resize:none;line-height:1.6;"></textarea>
-      </div>
-      <button class="btn btn-green" id="add-entry-btn" onclick="addEntry()">✓ এন্ট্রি যোগ করুন</button>
-    </div>
-    <div class="sec-label">এই মাসের হিসাব</div>
-    <div id="person-list"></div>
-  </div>
-
-  <!-- PERSONS -->
-  <div class="tab" id="tab-persons">
-    <div id="persons-admin-notice" class="admin-notice" style="display:none;">🔐 নতুন ব্যক্তি যোগ করুন</div>
-    <div id="add-person-card" class="gcard" style="display:none;">
-      <div class="gcard-title">👤 নতুন ব্যক্তি যোগ করুন</div>
-      <div class="field"><div class="label">নাম</div><input type="text" class="inp" id="new-person-name" placeholder="নাম লিখুন..."></div>
-      <div class="field"><div class="label">ফোন (ঐচ্ছিক)</div><input type="tel" class="inp" id="new-person-phone" placeholder="01XXXXXXXXX"></div>
-      <button class="btn btn-blue" id="add-person-btn" onclick="addPerson()">✓ ব্যক্তি যোগ করুন</button>
-    </div>
-    <div class="search-wrap"><span class="search-icon">🔍</span>
-      <input type="text" class="inp" id="person-search" placeholder="ব্যক্তি খুঁজুন..." oninput="renderPersons()">
-    </div>
-    <div id="all-person-list"></div>
-  </div>
-
-  <!-- REPORT -->
-  <div class="tab" id="tab-report">
-    <div class="month-select-wrap"><select class="inp" id="rep-month-sel" onchange="renderReport()"></select></div>
-    <div class="gcard">
-      <div class="gcard-title">📊 মাসিক সারসংক্ষেপ</div>
-      <div class="sum-head"><span>নাম</span><span>খাবার</span><span>টাকা</span></div>
-      <div id="rep-rows"></div>
-      <div class="sum-total" id="rep-total" style="display:none;">
-        <div class="sum-total-label">মোট</div>
-        <div class="sum-total-qty" id="rep-tot-qty">—</div>
-        <div class="sum-total-amt" id="rep-tot-amt">—</div>
-      </div>
-    </div>
-    <button class="btn btn-gold" onclick="shareReport()" style="margin-bottom:8px;">📤 রিপোর্ট শেয়ার করুন</button>
-  </div>
-</div>
-
-<div id="nav">
-  <button class="nav-btn active" id="nb-home" onclick="showTab('home')"><div class="nav-bar"></div><div class="nav-icon">🏠</div><div class="nav-label">হোম</div></button>
-  <button class="nav-btn" id="nb-persons" onclick="showTab('persons')"><div class="nav-bar"></div><div class="nav-icon">👥</div><div class="nav-label">ব্যক্তি</div></button>
-  <button class="nav-btn" id="nb-report" onclick="showTab('report')"><div class="nav-bar"></div><div class="nav-icon">📊</div><div class="nav-label">রিপোর্ট</div></button>
-</div>
-
-<!-- Person detail modal -->
-<div id="modal-overlay" onclick="closeModalOutside(event)">
-  <div id="modal">
-    <div id="modal-header">
-      <div><div class="mh-title" id="mdl-name">—</div><div style="font-size:11px;color:var(--muted);margin-top:2px;" id="mdl-phone"></div></div>
-      <button class="close-btn" onclick="closeModal()">✕</button>
-    </div>
-    <div id="modal-body">
-      <div class="month-select-wrap"><select class="inp" id="mdl-month-sel" onchange="renderModalDetail()"></select></div>
-      <div class="pills" id="mdl-pills"></div>
-      <div id="mdl-time-breakdown" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;"></div>
-      <div class="export-row">
-        <button class="exp-btn epng" onclick="exportPNG()"><span class="ei">🖼️</span>ছবি PNG</button>
-        <button class="exp-btn epdf" onclick="exportPDF()"><span class="ei">📄</span>PDF</button>
-        <button class="exp-btn ecsv" onclick="exportCSV()"><span class="ei">📊</span>Sheets</button>
-      </div>
-      <div class="gcard-title" style="margin-bottom:8px;">📅 দৈনিক ইতিহাস</div>
-      <div id="mdl-entries"></div>
-    </div>
-  </div>
-</div>
-
-<!-- Edit entry modal -->
-<div id="edit-overlay" onclick="closeEditOutside(event)">
-  <div id="edit-modal">
-    <h3>✏️ এন্ট্রি সম্পাদনা করুন</h3>
-    <input type="hidden" id="edit-entry-id">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-      <div class="field"><div class="label">তারিখ</div><input type="date" class="inp" id="edit-date"></div>
-      <div class="field">
-        <div class="label">সময়</div>
-        <select class="inp" id="edit-meal-time">
-          <option value="morning">🌅 সকাল</option>
-          <option value="noon">☀️ দুপুর</option>
-          <option value="night">🌙 রাত</option>
-        </select>
-      </div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-      <div class="field"><div class="label">খাবারের সংখ্যা</div><input type="text" inputmode="numeric" class="inp" id="edit-qty" oninput="calcEditTotal()"></div>
-      <div class="field"><div class="label">প্রতি খাবারের দাম (৳)</div><input type="text" inputmode="decimal" class="inp" id="edit-unit-price" oninput="calcEditTotal()"></div>
-    </div>
-    <div id="edit-total-preview" style="display:none;background:rgba(240,180,41,.08);border:1px solid rgba(240,180,41,.25);border-radius:10px;padding:10px 14px;margin-bottom:10px;justify-content:space-between;align-items:center;">
-      <span style="font-size:13px;color:var(--muted);">মোট টাকা</span>
-      <span style="font-size:18px;font-weight:800;color:var(--gold);" id="edit-total-val">৳০</span>
-    </div>
-    <div class="field">
-      <div class="label">বিস্তারিত / নোট</div>
-      <textarea class="inp" id="edit-note" rows="2" style="resize:none;line-height:1.6;" placeholder="যেকোনো তথ্য লিখুন..."></textarea>
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-blue" id="edit-save-btn" onclick="saveEdit()">✓ সংরক্ষণ করুন</button>
-      <button class="btn btn-ghost" onclick="closeEdit()">বাতিল</button>
-    </div>
-  </div>
-</div>
-
-<!-- Note view popup -->
-<div id="note-overlay" onclick="closeNote()">
-  <div id="note-popup" onclick="event.stopPropagation()">
-    <h3 id="note-popup-title">বিস্তারিত</h3>
-    <div class="note-date" id="note-popup-date"></div>
-    <div class="note-text" id="note-popup-text"></div>
-    <button class="btn btn-ghost" style="margin-top:12px;" onclick="closeNote()">বন্ধ করুন</button>
-  </div>
-</div>
-
-<!-- Hidden export card -->
-<div id="export-card">
-  <div class="ech"><div class="eclogo">🍱</div><div><div class="ect" id="ec-name"></div><div class="ecs" id="ec-sub"></div></div></div>
-  <div class="ecpills">
-    <div class="ecp" style="background:rgba(59,158,255,.08);border:1px solid rgba(59,158,255,.15);"><div class="ecpv" style="color:#3b9eff;" id="ec-meals">0</div><div class="ecpl">মোট খাবার</div></div>
-    <div class="ecp" style="background:rgba(240,180,41,.08);border:1px solid rgba(240,180,41,.15);"><div class="ecpv" style="color:#f0b429;" id="ec-bill">—</div><div class="ecpl">মোট বিল</div></div>
-    <div class="ecp" style="background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.15);"><div class="ecpv" style="color:#34d399;" id="ec-days">0</div><div class="ecpl">এন্ট্রি</div></div>
-  </div>
-  <table>
-    <thead><tr><th>তারিখ</th><th>সময়</th><th>খাবার</th><th>টাকা</th></tr></thead>
-    <tbody id="ec-rows"></tbody>
-    <tfoot><tr><td colspan="2">মোট</td><td id="ec-tot-qty" style="text-align:center;color:#3b9eff;"></td><td id="ec-tot-amt" style="text-align:center;"></td></tr></tfoot>
-  </table>
-  <div class="ecf"><span>ঘরের স্বাদ</span><span id="ec-date"></span></div>
-</div>
-
 <div id="toast"></div>
 
-<script>
-const SB_URL='__SUPABASE_URL__';
-const SB_KEY='__SUPABASE_KEY__';
-const ADMIN_PASS='14205'; // ← পাসওয়ার্ড বদলান
+<div id="content">
+  <!-- CUSTOMERS -->
+  <div id="tab-customers" class="tab-pane">
+    <div class="gcard">
+      <div class="gcard-title" id="cust-form-title">➕ নতুন কাস্টমার</div>
+      <input class="inp" id="f-name" placeholder="নাম *">
+      <input class="inp" id="f-phone" placeholder="মোবাইল নম্বর" type="tel">
+      <input class="inp" id="f-price" placeholder="প্রতি খাবারের দাম (৳)" type="number" min="0">
+      <div class="btn-row">
+        <button class="btn btn-blue" id="cust-submit-btn" onclick="submitCustomer()">যোগ করুন</button>
+        <button class="btn btn-ghost" id="cust-cancel-btn" onclick="cancelEdit()" style="display:none">বাতিল</button>
+      </div>
+    </div>
+    <input class="inp" id="cust-search" placeholder="🔍 খুঁজুন..." oninput="renderCustomers()" style="margin-bottom:10px;">
+    <div id="cust-list"></div>
+  </div>
 
-const MT={morning:{label:'সকাল',icon:'🌅',cls:'morning'},noon:{label:'দুপুর',icon:'☀️',cls:'noon'},night:{label:'রাত',icon:'🌙',cls:'night'}};
-const MT_ORDER={morning:0,noon:1,night:2};
+  <!-- DAILY -->
+  <div id="tab-daily" class="tab-pane active">
+    <div class="gcard">
+      <label style="font-size:12px;color:var(--muted);font-weight:600;">📅 তারিখ</label>
+      <input class="inp" id="daily-date" type="date" onchange="renderDaily()">
+      <div id="daily-today-badge" style="font-size:11px;color:var(--green);font-weight:600;text-align:center;display:none;">✓ আজকের লগ</div>
+      <div class="pills">
+        <div class="pill" style="background:rgba(59,158,255,.1);border:1px solid rgba(59,158,255,.1);"><div class="pill-val" style="color:var(--blue);" id="daily-total-meals">০টি</div><div class="pill-label">মোট খাবার</div></div>
+        <div class="pill" style="background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.1);"><div class="pill-val" style="color:var(--gold);" id="daily-total-bill">৳০</div><div class="pill-label">মোট বিল</div></div>
+      </div>
+    </div>
+    <div id="daily-list"></div>
+  </div>
 
-let isAdmin=false,persons=[],entries=[],modalPersonId=null,currentTab='home',pollTimer=null,selectedMealTime='morning';
+  <!-- MONTHLY -->
+  <div id="tab-monthly" class="tab-pane">
+    <div class="gcard">
+      <select class="inp" id="monthly-select" onchange="renderMonthly()"></select>
+      <div class="pills">
+        <div class="pill" style="background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.1);"><div class="pill-val" style="color:var(--green);" id="m-custs">০জন</div><div class="pill-label">কাস্টমার</div></div>
+        <div class="pill" style="background:rgba(59,158,255,.1);border:1px solid rgba(59,158,255,.1);"><div class="pill-val" style="color:var(--blue);" id="m-meals">০টি</div><div class="pill-label">খাবার</div></div>
+        <div class="pill" style="background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.1);"><div class="pill-val" style="color:var(--gold);" id="m-bill">৳০</div><div class="pill-label">মোট বিল</div></div>
+        <div class="pill" style="background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.1);"><div class="pill-val" style="color:var(--red);" id="m-due">৳০</div><div class="pill-label">বাকি</div></div>
+      </div>
+    </div>
+    <div id="monthly-list"></div>
+  </div>
 
-// ── Supabase ──
-function sbH(){return{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Prefer':'return=representation'};}
-async function sbGet(t,q=''){const r=await fetch(`${SB_URL}/rest/v1/${t}?${q}`,{headers:sbH()});if(!r.ok)throw new Error(await r.text());return r.json();}
-async function sbPost(t,d){const r=await fetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',headers:sbH(),body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return r.json();}
-async function sbPatch(t,q,d){const r=await fetch(`${SB_URL}/rest/v1/${t}?${q}`,{method:'PATCH',headers:sbH(),body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return r.json();}
-async function sbDelete(t,q){const r=await fetch(`${SB_URL}/rest/v1/${t}?${q}`,{method:'DELETE',headers:sbH()});if(!r.ok)throw new Error(await r.text());}
+  <!-- REPORT / EXPORT -->
+  <div id="tab-report" class="tab-pane">
+    <div class="gcard">
+      <div class="gcard-title">📤 ডাউনলোড ও এক্সপোর্ট</div>
+      <div style="font-size:12px;color:var(--muted);">কাস্টমার বেছে নিন → মাস বা তারিখ বেছে নিন → ডাউনলোড করুন</div>
+    </div>
 
-async function loadData(silent=false){
-  if(!silent)setSyncState('syncing','লোড হচ্ছে...');
-  try{[persons,entries]=await Promise.all([sbGet('gs_persons','select=*&order=created_at.asc'),sbGet('gs_entries','select=*&order=entry_date.asc,meal_time.asc')]);setSyncState('ok','লাইভ');return true;}
-  catch{setSyncState('err','সংযোগ নেই');return false;}
-}
-function setSyncState(s,l){document.getElementById('sync-dot').className='sync-dot '+s;document.getElementById('sync-label').textContent=l;}
-function startPolling(){clearInterval(pollTimer);pollTimer=setInterval(async()=>{if(await loadData(true))renderCurrentTab();},10000);}
+    <!-- Date range -->
+    <div class="gcard">
+      <div class="gcard-title">📅 সময়সীমা বেছে নিন</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:3px;">শুরু</label><input class="inp" id="exp-from" type="date"></div>
+        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:3px;">শেষ</label><input class="inp" id="exp-to" type="date"></div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="setRange('this-month')">এই মাস</button>
+        <button class="btn btn-ghost btn-sm" onclick="setRange('last-month')">গত মাস</button>
+        <button class="btn btn-ghost btn-sm" onclick="setRange('3months')">৩ মাস</button>
+        <button class="btn btn-ghost btn-sm" onclick="setRange('all')">সব</button>
+      </div>
+    </div>
 
-// ── Helpers ──
-function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function showToast(msg,dur=2400){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._to);t._to=setTimeout(()=>t.classList.remove('show'),dur);}
-function allMonths(){const s=new Set(),n=new Date();s.add(`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`);entries.forEach(e=>{if(e.entry_date)s.add(e.entry_date.slice(0,7));});return[...s].sort().reverse();}
-const BNM=['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'];
-function monthLabel(mk){const[y,m]=mk.split('-');return`${BNM[+m-1]} ${y}`;}
-function fmtDate(d){if(!d)return'';const[y,m,dd]=d.slice(0,10).split('-');return`${dd}/${m}`;}
-function fmtDateFull(d){if(!d)return'';const[y,m,dd]=d.slice(0,10).split('-');return`${dd} ${BNM[+m-1]} ${y}`;}
-function pStats(pid,mk){const e=entries.filter(e=>e.person_id===pid&&e.entry_date&&e.entry_date.startsWith(mk));return{ents:e,meals:e.reduce((s,e)=>s+Number(e.qty||0),0),bill:e.reduce((s,e)=>s+Number(e.amount||0),0)};}
-function populateSels(){const months=allMonths(),opts=months.map(m=>`<option value="${m}">${monthLabel(m)}</option>`).join('');['home-month-sel','rep-month-sel'].forEach(id=>{const el=document.getElementById(id),cur=el.value;el.innerHTML=opts;if(months.includes(cur))el.value=cur;});}
-
-// ── Meal time ──
-function selectMealTime(mt){selectedMealTime=mt;['morning','noon','night'].forEach(t=>{document.getElementById('mt-'+t).classList.toggle('active',t===mt);});}
-
-// ── Auth ──
-function handleModeClick(){if(isAdmin){isAdmin=false;updateAdminUI();showToast('Admin mode বন্ধ');}else{document.getElementById('pw-input').value='';document.getElementById('login-screen').classList.add('show');setTimeout(()=>document.getElementById('pw-input').focus(),200);}}
-function doLogin(){if(document.getElementById('pw-input').value===ADMIN_PASS){isAdmin=true;document.getElementById('login-screen').classList.remove('show');updateAdminUI();showToast('✓ Admin mode চালু');}else{showToast('❌ পাসওয়ার্ড ভুল');document.getElementById('pw-input').value='';}}
-function closeLogin(){document.getElementById('login-screen').classList.remove('show');}
-function updateAdminUI(){const b=document.getElementById('mode-badge');b.className=isAdmin?'mode-badge admin':'mode-badge view';b.textContent=isAdmin?'🔐 Admin':'👁️ দেখুন';['home-admin-notice','add-entry-card','persons-admin-notice','add-person-card'].forEach(id=>{document.getElementById(id).style.display=isAdmin?'':'none';});renderAll();}
-
-// ── Tabs ──
-function showTab(n){currentTab=n;['home','persons','report'].forEach(t=>{document.getElementById('tab-'+t).classList.toggle('active',t===n);document.getElementById('nb-'+t).classList.toggle('active',t===n);});renderCurrentTab();}
-function renderCurrentTab(){if(currentTab==='home')renderHome();else if(currentTab==='persons')renderPersons();else renderReport();}
-
-// ── Calc total preview ──
-function calcTotal(){
-  const qty=parseFloat(document.getElementById('entry-qty').value)||0;
-  const up=parseFloat(String(document.getElementById('entry-unit-price').value).replace(/[,،]/g,''))||0;
-  const preview=document.getElementById('entry-total-preview');
-  if(qty>0&&up>0){preview.style.display='flex';document.getElementById('entry-total-val').textContent=`৳${(qty*up).toLocaleString()}`;}
-  else preview.style.display='none';
-}
-function calcEditTotal(){
-  const qty=parseFloat(document.getElementById('edit-qty').value)||0;
-  const up=parseFloat(String(document.getElementById('edit-unit-price').value).replace(/[,،]/g,''))||0;
-  const preview=document.getElementById('edit-total-preview');
-  if(qty>0&&up>0){preview.style.display='flex';document.getElementById('edit-total-val').textContent=`৳${(qty*up).toLocaleString()}`;}
-  else preview.style.display='none';
-}
-
-// ── Render ──
-function renderAll(){populateSels();const sel=document.getElementById('entry-person-sel');sel.innerHTML='<option value="">-- বেছে নিন --</option>'+persons.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');renderHome();renderPersons();renderReport();}
-
-function renderHome(){
-  populateSels();const mk=document.getElementById('home-month-sel').value||allMonths()[0];
-  const me=entries.filter(e=>e.entry_date&&e.entry_date.startsWith(mk));
-  document.getElementById('stat-persons').textContent=new Set(me.map(e=>e.person_id)).size;
-  document.getElementById('stat-meals').textContent=me.reduce((s,e)=>s+Number(e.qty||0),0);
-  const tb=me.reduce((s,e)=>s+Number(e.amount||0),0);
-  document.getElementById('stat-bill').textContent=tb>0?`৳${tb.toLocaleString()}`:'৳০';
-  const di=document.getElementById('entry-date');if(!di.value)di.value=new Date().toISOString().slice(0,10);
-  const list=document.getElementById('person-list');
-  if(!persons.length){list.innerHTML='<div class="empty">এখনো কোনো ব্যক্তি যোগ করা হয়নি</div>';return;}
-  const ws=persons.map(p=>{const{meals,bill}=pStats(p.id,mk);return{...p,meals,bill};}).filter(p=>p.meals>0||isAdmin);
-  if(!ws.length){list.innerHTML='<div class="empty">এই মাসে কোনো এন্ট্রি নেই</div>';return;}
-  list.innerHTML=ws.map((p,i)=>{
-    const ents=entries.filter(e=>e.person_id===p.id&&e.entry_date&&e.entry_date.startsWith(mk));
-    const byTime={morning:0,noon:0,night:0};
-    ents.forEach(e=>{const t=e.meal_time||'morning';byTime[t]=(byTime[t]||0)+Number(e.qty||0);});
-    const tags=Object.entries(byTime).filter(([,v])=>v>0).map(([t,v])=>`<span class="mt-badge ${MT[t].cls}">${MT[t].icon}${v}</span>`).join('');
-    return`<div class="person-card anim" style="animation-delay:${i*.04}s" onclick="openModal('${p.id}')">
-      <div class="p-avatar">${esc(p.name.charAt(0))}</div>
-      <div class="p-info"><div class="p-name">${esc(p.name)}</div>
-      <div class="p-meta">${tags}${p.bill>0?`<span style="color:var(--gold);font-weight:700;">৳${p.bill.toLocaleString()}</span>`:''}</div></div>
-      <div style="color:var(--muted);font-size:18px;">›</div>
-    </div>`;}).join('');
-}
-
-function renderPersons(){
-  const q=(document.getElementById('person-search').value||'').toLowerCase().trim();
-  const fl=persons.filter(p=>!q||p.name.toLowerCase().includes(q)||String(p.phone||'').includes(q));
-  const list=document.getElementById('all-person-list');
-  if(!fl.length){list.innerHTML=`<div class="empty">${q?'কোনো ফলাফল নেই':'ব্যক্তির তালিকা খালি'}</div>`;return;}
-  const mk=allMonths()[0];
-  list.innerHTML=fl.map((p,i)=>{const{meals}=pStats(p.id,mk);return`
-    <div class="person-card anim" style="animation-delay:${i*.04}s" onclick="openModal('${p.id}')">
-      <div class="p-avatar" style="background:rgba(240,180,41,.1);color:var(--gold);">${esc(p.name.charAt(0))}</div>
-      <div class="p-info"><div class="p-name">${esc(p.name)}</div>
-      <div class="p-meta">${p.phone?`<span>📞 ${esc(p.phone)}</span>`:''}<span>${meals>0?`এই মাসে ${meals}টি`:'এই মাসে ০টি'}</span></div></div>
-      ${isAdmin?`<button style="background:rgba(248,113,113,.1);color:var(--red);border:none;border-radius:8px;padding:6px 9px;cursor:pointer;font-size:14px;" onclick="event.stopPropagation();deletePerson('${p.id}')">🗑</button>`:'<div style="color:var(--muted);font-size:18px;">›</div>'}
-    </div>`;}).join('');
-}
-
-function renderReport(){
-  populateSels();const mk=document.getElementById('rep-month-sel').value||allMonths()[0];
-  const data=persons.map(p=>{const{meals,bill}=pStats(p.id,mk);return{...p,meals,bill};}).filter(p=>p.meals>0);
-  const rows=document.getElementById('rep-rows');
-  if(!data.length){rows.innerHTML='<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px 0;">এই মাসে কোনো ডেটা নেই</div>';document.getElementById('rep-total').style.display='none';return;}
-  const totM=data.reduce((s,p)=>s+p.meals,0),totB=data.reduce((s,p)=>s+p.bill,0);
-  rows.innerHTML=data.map((p,i)=>`
-    <div class="sum-row" onclick="openModal('${p.id}')" style="${i%2===0?'background:rgba(255,255,255,.02)':''}">
-      <div><div class="sum-name">${esc(p.name)}</div>${p.phone?`<div class="sum-phone">📞 ${esc(p.phone)}</div>`:''}</div>
-      <div class="sum-qty">${p.meals}টি</div><div class="sum-amt">${p.bill>0?`৳${p.bill.toLocaleString()}`:'—'}</div>
-    </div>`).join('');
-  document.getElementById('rep-total').style.display='';
-  document.getElementById('rep-tot-qty').textContent=`${totM}টি`;
-  document.getElementById('rep-tot-amt').textContent=totB>0?`৳${totB.toLocaleString()}`:'—';
-}
-
-// ── Actions ──
-async function addPerson(){
-  const name=document.getElementById('new-person-name').value.trim(),phone=document.getElementById('new-person-phone').value.trim();
-  if(!name){showToast('নাম লিখুন');return;}
-  if(persons.find(p=>p.name.toLowerCase()===name.toLowerCase())){showToast('এই নামে ব্যক্তি আছে');return;}
-  const btn=document.getElementById('add-person-btn');btn.disabled=true;btn.textContent='⏳...';setSyncState('syncing','সেভ হচ্ছে...');
-  try{const[row]=await sbPost('gs_persons',{id:uid(),name,phone:phone||null});persons.push(row);document.getElementById('new-person-name').value='';document.getElementById('new-person-phone').value='';showToast(`✓ ${name} যোগ হয়েছে`);setSyncState('ok','লাইভ');renderAll();}
-  catch{showToast('❌ সেভ হয়নি');setSyncState('err','সমস্যা');}
-  btn.disabled=false;btn.textContent='✓ ব্যক্তি যোগ করুন';
-}
-
-async function deletePerson(id){
-  if(!confirm('মুছে ফেলবেন?'))return;setSyncState('syncing','মুছছে...');
-  try{await sbDelete('gs_persons',`id=eq.${id}`);persons=persons.filter(p=>p.id!==id);entries=entries.filter(e=>e.person_id!==id);showToast('✓ মুছে ফেলা হয়েছে');setSyncState('ok','লাইভ');renderAll();}
-  catch{showToast('❌ মুছা যায়নি');setSyncState('err','সমস্যা');}
-}
-
-async function addEntry(){
-  const personId=document.getElementById('entry-person-sel').value;
-  const date=document.getElementById('entry-date').value;
-  const mealTime=selectedMealTime;
-  const qty=Math.max(1,Math.round(parseFloat(document.getElementById('entry-qty').value)||1));
-  const unitPrice=parseFloat(String(document.getElementById('entry-unit-price').value).replace(/[,،]/g,''))||0;
-  const amount=qty*unitPrice;
-  const note=document.getElementById('entry-note').value.trim();
-  if(!personId){showToast('ব্যক্তি বেছে নিন');return;}
-  if(!date){showToast('তারিখ দিন');return;}
-  if(unitPrice<=0){showToast('প্রতি খাবারের দাম দিন');return;}
-  const btn=document.getElementById('add-entry-btn');btn.disabled=true;btn.textContent='⏳...';setSyncState('syncing','সেভ হচ্ছে...');
-  try{
-    const[row]=await sbPost('gs_entries',{id:uid(),person_id:personId,entry_date:date,meal_time:mealTime,qty,amount,note:note||null});
-    entries.push(row);
-    document.getElementById('entry-qty').value='';
-    document.getElementById('entry-note').value='';
-    document.getElementById('entry-total-preview').style.display='none';
-    const mt=MT[mealTime];
-    showToast(`✓ ${mt.icon} ${mt.label} — ${qty}টি × ৳${unitPrice} = ৳${amount.toLocaleString()}`);
-    setSyncState('ok','লাইভ');populateSels();renderAll();
-    if(modalPersonId===personId)renderModalDetail();
-  }catch{showToast('❌ সেভ হয়নি');setSyncState('err','সমস্যা');}
-  btn.disabled=false;btn.textContent='✓ এন্ট্রি যোগ করুন';
-}
-
-async function deleteEntry(entryId){
-  if(!confirm('এই এন্ট্রি মুছবেন?'))return;
-  setSyncState('syncing','মুছছে...');
-  try{await sbDelete('gs_entries',`id=eq.${entryId}`);entries=entries.filter(e=>e.id!==entryId);showToast('✓ মুছে ফেলা হয়েছে');setSyncState('ok','লাইভ');renderAll();renderModalDetail();}
-  catch{showToast('❌ মুছা যায়নি');setSyncState('err','সমস্যা');}
-}
-
-// ── Edit entry ──
-function openEdit(entryId){
-  const e=entries.find(x=>x.id===entryId);if(!e)return;
-  document.getElementById('edit-entry-id').value=entryId;
-  document.getElementById('edit-date').value=e.entry_date||'';
-  document.getElementById('edit-meal-time').value=e.meal_time||'morning';
-  // Reverse-calculate unit price if possible
-  const qty=Number(e.qty)||1;
-  const amount=Number(e.amount)||0;
-  const unitPrice=qty>0&&amount>0?Math.round((amount/qty)*100)/100:amount;
-  document.getElementById('edit-qty').value=qty;
-  document.getElementById('edit-unit-price').value=unitPrice||'';
-  document.getElementById('edit-note').value=e.note||'';
-  calcEditTotal();
-  document.getElementById('edit-overlay').classList.add('open');
-}
-
-async function saveEdit(){
-  const entryId=document.getElementById('edit-entry-id').value;
-  const date=document.getElementById('edit-date').value;
-  const mealTime=document.getElementById('edit-meal-time').value;
-  const qty=Math.max(1,Math.round(parseFloat(document.getElementById('edit-qty').value)||1));
-  const unitPrice=parseFloat(String(document.getElementById('edit-unit-price').value).replace(/[,،]/g,''))||0;
-  const amount=qty*unitPrice;
-  const note=document.getElementById('edit-note').value.trim();
-  if(!date){showToast('তারিখ দিন');return;}
-  if(unitPrice<=0){showToast('দাম দিন');return;}
-  const btn=document.getElementById('edit-save-btn');btn.disabled=true;btn.textContent='⏳...';setSyncState('syncing','সেভ হচ্ছে...');
-  try{
-    await sbPatch('gs_entries',`id=eq.${entryId}`,{entry_date:date,meal_time:mealTime,qty,amount,note:note||null});
-    const idx=entries.findIndex(e=>e.id===entryId);
-    if(idx>=0)entries[idx]={...entries[idx],entry_date:date,meal_time:mealTime,qty,amount,note:note||null};
-    showToast(`✓ সম্পাদনা সংরক্ষিত — ৳${amount.toLocaleString()}`);
-    setSyncState('ok','লাইভ');closeEdit();renderAll();renderModalDetail();
-  }catch{showToast('❌ সেভ হয়নি');setSyncState('err','সমস্যা');}
-  btn.disabled=false;btn.textContent='✓ সংরক্ষণ করুন';
-}
-
-function closeEdit(){document.getElementById('edit-overlay').classList.remove('open');}
-function closeEditOutside(ev){if(ev.target===document.getElementById('edit-overlay'))closeEdit();}
-
-// ── Note popup ──
-function openNote(entryId){
-  const e=entries.find(x=>x.id===entryId);if(!e||!e.note)return;
-  const mt=MT[e.meal_time]||MT.morning;
-  document.getElementById('note-popup-title').textContent=`${mt.icon} ${mt.label} — ${fmtDateFull(e.entry_date)}`;
-  document.getElementById('note-popup-date').textContent=`${e.qty}টি খাবার${Number(e.amount)>0?' | ৳'+Number(e.amount).toLocaleString():''}`;
-  document.getElementById('note-popup-text').textContent=e.note;
-  document.getElementById('note-overlay').classList.add('open');
-}
-function closeNote(){document.getElementById('note-overlay').classList.remove('open');}
-
-// ── Modal ──
-function openModal(personId){
-  modalPersonId=personId;const p=persons.find(x=>x.id===personId);if(!p)return;
-  document.getElementById('mdl-name').textContent=p.name;
-  const ph=document.getElementById('mdl-phone');ph.textContent=p.phone?`📞 ${p.phone}`:'';ph.style.display=p.phone?'':'none';
-  document.getElementById('mdl-month-sel').innerHTML=allMonths().map(m=>`<option value="${m}">${monthLabel(m)}</option>`).join('');
-  document.getElementById('modal-overlay').classList.add('open');
-  renderModalDetail();
-}
-
-function renderModalDetail(){
-  const p=persons.find(x=>x.id===modalPersonId);if(!p)return;
-  const mk=document.getElementById('mdl-month-sel').value||allMonths()[0];
-  const{ents,meals,bill}=pStats(p.id,mk);
-  document.getElementById('mdl-pills').innerHTML=`
-    <div class="pill" style="background:rgba(59,158,255,.1);border:1px solid rgba(59,158,255,.15);"><div class="pill-val" style="color:var(--blue);">${meals}টি</div><div class="pill-label">মোট খাবার</div></div>
-    <div class="pill" style="background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.15);"><div class="pill-val" style="color:var(--gold);">${bill>0?`৳${bill.toLocaleString()}`:'—'}</div><div class="pill-label">মোট বিল</div></div>
-    <div class="pill" style="background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.15);"><div class="pill-val" style="color:var(--green);">${ents.length}টি</div><div class="pill-label">এন্ট্রি</div></div>`;
-
-  // time breakdown
-  const byTime={morning:0,noon:0,night:0};
-  ents.forEach(e=>{const t=e.meal_time||'morning';byTime[t]=(byTime[t]||0)+Number(e.qty||0);});
-  const tbd=document.getElementById('mdl-time-breakdown');
-  const tbHtml=Object.entries(byTime).filter(([,v])=>v>0).map(([t,v])=>`<span class="mt-badge ${MT[t].cls}" style="font-size:11px;padding:3px 9px;">${MT[t].icon} ${MT[t].label}: ${v}টি</span>`).join('');
-  tbd.innerHTML=tbHtml;tbd.style.display=tbHtml?'flex':'none';
-
-  const ed=document.getElementById('mdl-entries');
-  if(!ents.length){ed.innerHTML='<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px 0;">এই মাসে কোনো ডেটা নেই</div>';return;}
-
-  const sorted=[...ents].sort((a,b)=>{const d=b.entry_date.localeCompare(a.entry_date);return d!==0?d:(MT_ORDER[a.meal_time]||0)-(MT_ORDER[b.meal_time]||0);});
-
-  ed.innerHTML=sorted.map(e=>{
-    const mt=MT[e.meal_time]||MT.morning;
-    const hasNote=e.note&&e.note.trim();
-    return`<div class="entry-card">
-      <div class="entry-card-top">
-        <div class="entry-card-info">
-          <div class="entry-card-date">${fmtDateFull(e.entry_date)} &nbsp;<span class="mt-badge ${mt.cls}">${mt.icon} ${mt.label}</span></div>
-          <div class="entry-card-nums">
-            <span class="entry-card-qty">${e.qty}টি খাবার</span>
-            ${Number(e.amount)>0?`<span class="entry-card-amt">৳${Number(e.amount).toLocaleString()}</span>`:''}
-          </div>
-        </div>
-        <div class="entry-card-actions">
-          ${isAdmin?`<button class="eact-btn eact-edit" onclick="openEdit('${e.id}')" title="সম্পাদনা">✏️</button>`:''}
-          ${isAdmin?`<button class="eact-btn eact-del" onclick="deleteEntry('${e.id}')" title="মুছুন">🗑</button>`:''}
+    <!-- Customer selection -->
+    <div class="gcard">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div class="gcard-title">👥 কাস্টমার বেছে নিন</div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-ghost btn-sm" onclick="selectAll()">সব</button>
+          <button class="btn btn-ghost btn-sm" onclick="clearAll()">বাদ</button>
         </div>
       </div>
-      ${hasNote?`<div class="entry-card-note" onclick="openNote('${e.id}')"><span class="note-icon">📝</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(e.note)}</span><span style="font-size:10px;color:var(--blue);">দেখুন</span></div>`:''}
+      <div id="exp-cust-list"></div>
+    </div>
+
+    <!-- Export buttons -->
+    <div class="gcard">
+      <div class="gcard-title">⬇️ ডাউনলোড করুন</div>
+      <button class="btn btn-red" onclick="exportPDF()">📄 PDF ডাউনলোড করুন</button>
+      <button class="btn btn-green" onclick="exportCSV()">📊 CSV / Google Sheets</button>
+      <button class="btn btn-share" onclick="exportTextShare()">📤 টেক্সট শেয়ার করুন</button>
+      <div style="font-size:11px;color:var(--muted);text-align:center;">CSV ফাইল → Google Drive → Google Sheets দিয়ে খুলুন</div>
+    </div>
+  </div>
+</div>
+
+<nav id="nav">
+  <button class="nav-btn active" onclick="switchTab('daily')" id="nav-daily"><div class="nav-bar"></div><div class="nav-icon">📋</div><div class="nav-label">ডেইলি</div></button>
+  <button class="nav-btn" onclick="switchTab('customers')" id="nav-customers"><div class="nav-bar"></div><div class="nav-icon">👥</div><div class="nav-label">কাস্টমার</div></button>
+  <button class="nav-btn" onclick="switchTab('monthly')" id="nav-monthly"><div class="nav-bar"></div><div class="nav-icon">📅</div><div class="nav-label">মাসিক</div></button>
+  <button class="nav-btn" onclick="switchTab('report')" id="nav-report"><div class="nav-bar"></div><div class="nav-icon">📤</div><div class="nav-label">এক্সপোর্ট</div></button>
+</nav>
+</div><!-- end #app -->
+
+<!-- CUSTOMER DETAIL MODAL -->
+<div id="modal-overlay" onclick="closeModalOutside(event)">
+  <div id="modal" class="slide">
+    <div id="modal-header">
+      <div style="flex:1;">
+        <div id="modal-cust-name" style="font-weight:800;font-size:16px;"></div>
+        <div id="modal-cust-phone" style="font-size:12px;color:var(--muted);margin-top:1px;"></div>
+      </div>
+      <!-- Tab pills inside modal -->
+      <div style="display:flex;gap:5px;margin-right:8px;">
+        <button class="btn btn-blue btn-sm" id="mdl-tab-month-btn" onclick="setModalTab('month')">মাস</button>
+        <button class="btn btn-ghost btn-sm" id="mdl-tab-all-btn" onclick="setModalTab('all')">সব মাস</button>
+        <button class="btn btn-ghost btn-sm" id="mdl-tab-pay-btn" onclick="setModalTab('pay')">💳 জমা</button>
+      </div>
+      <button onclick="closeModal()" style="background:var(--card2);border:none;border-radius:8px;width:30px;height:30px;color:var(--muted);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;">✕</button>
+    </div>
+    <div id="modal-body">
+      <!-- Month view -->
+      <div id="mdl-month-view">
+        <select class="inp" id="modal-month-select" onchange="renderModalMonth()" style="margin-bottom:10px;"></select>
+        <div id="modal-dl-card" class="dl-card">
+          <div class="dl-card-header">
+            <div class="dl-logo">🍱</div>
+            <div style="flex:1;"><div id="mdl-name" style="font-weight:800;font-size:15px;"></div><div id="mdl-phone" style="font-size:11px;color:var(--muted);margin-top:1px;"></div></div>
+            <div style="background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.28);border-radius:10px;padding:6px 10px;text-align:center;">
+              <div id="mdl-month" style="font-size:11px;color:var(--gold);font-weight:700;"></div>
+              <div style="font-size:9px;color:var(--muted);margin-top:1px;">ঘরের স্বাদ</div>
+            </div>
+          </div>
+          <div class="pills" style="margin-bottom:14px;" id="mdl-pills"></div>
+          <div id="mdl-table"></div>
+          <div class="dl-card-footer"><span>ঘরের স্বাদ</span><span id="mdl-footer-date"></span></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+          <button class="btn btn-gold btn-sm" id="dl-detail-img" onclick="downloadDetailImg()" style="flex:1;">📷 ছবি</button>
+          <button class="btn btn-red btn-sm" onclick="downloadSinglePDF()" style="flex:1;">📄 PDF</button>
+          <button class="btn btn-green btn-sm" onclick="downloadSingleCSV()" style="flex:1;">📊 CSV</button>
+        </div>
+      </div>
+
+      <!-- All months view -->
+      <div id="mdl-all-view" style="display:none;">
+        <div id="mdl-all-content"></div>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button class="btn btn-red" onclick="downloadAllMonthsPDF()" style="flex:1;">📄 সব মাস PDF</button>
+          <button class="btn btn-green" onclick="downloadAllMonthsCSV()" style="flex:1;">📊 সব মাস CSV</button>
+        </div>
+      </div>
+
+      <!-- Payment view -->
+      <div id="mdl-pay-view" style="display:none;">
+        <div class="gcard" style="margin-bottom:10px;">
+          <div class="gcard-title">💳 জমা যোগ করুন</div>
+          <select class="inp" id="pay-month-sel"></select>
+          <input class="inp" id="pay-amount" placeholder="টাকার পরিমাণ (৳)" type="number" min="0">
+          <button class="btn btn-blue" onclick="addPayment()">জমা সেভ করুন</button>
+        </div>
+        <div id="pay-history"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// DATA & STATE
+// ═══════════════════════════════════════════════
+let db=null, customers=[], logs={}, payments={};
+let editId=null, modalCustId=null, modalTab='month', activeTab='daily';
+let selectedCusts=new Set(), syncTimer=null;
+const CFG_KEY='gs_firebase_cfg';
+
+// ═══════════════════════════════════════════════
+// FIREBASE SETUP
+// ═══════════════════════════════════════════════
+function saveConfig(){
+  const apiKey=v('s-apikey'), dbURL=v('s-dburl'), projectId=v('s-projectid');
+  if(!apiKey||!dbURL||!projectId){el('setup-err').style.display='block';return;}
+  const cfg={apiKey,databaseURL:dbURL,projectId,authDomain:`${projectId}.firebaseapp.com`};
+  localStorage.setItem(CFG_KEY,JSON.stringify(cfg));
+  initFirebase(cfg);
+}
+function loadConfig(){
+  const s=localStorage.getItem(CFG_KEY);
+  if(s) initFirebase(JSON.parse(s));
+  else{el('setup-err').textContent='সেটআপ পাওয়া যায়নি';el('setup-err').style.display='block';}
+}
+function initFirebase(cfg){
+  try{
+    firebase.initializeApp(cfg); db=firebase.database();
+    el('setup-screen').style.display='none'; el('app').style.display='block';
+    startApp();
+  }catch(e){el('setup-err').textContent='সংযোগ ব্যর্থ — তথ্য যাচাই করুন';el('setup-err').style.display='block';}
+}
+window.addEventListener('load',()=>{const s=localStorage.getItem(CFG_KEY);if(s)initFirebase(JSON.parse(s));});
+
+function startApp(){
+  setSyncState('syncing','সংযুক্ত হচ্ছে...');
+  db.ref('customers').on('value',snap=>{
+    customers=snap.val()?Object.values(snap.val()):[];
+    setSyncState('online','সংযুক্ত ✓'); refreshCurrentTab(); renderExportCustList();
+  },()=>setSyncState('offline','অফলাইন'));
+  db.ref('logs').on('value',snap=>{logs=snap.val()||{};refreshCurrentTab();});
+  db.ref('payments').on('value',snap=>{payments=snap.val()||{};refreshCurrentTab();});
+  init();
+}
+
+function writeCustomers(){if(!db)return;const o={};customers.forEach(c=>{o[c.id]=c;});db.ref('customers').set(o);}
+function writeLog(cId,date,qty){if(!db)return;db.ref(`logs/${monthKey(date)}/${cId}/${date}`).set(qty);}
+function writePayment(cId,mk,amount){if(!db)return;db.ref(`payments/${cId}/${mk}`).set(Number(amount)||0);}
+function delCustDB(id){if(!db)return;db.ref('customers/'+id).remove();}
+function setSyncState(s,l){const d=el('sync-dot');d.className=s==='online'?'':s;el('sync-label').textContent=l;}
+
+// ═══════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════
+const el=id=>document.getElementById(id);
+const v=id=>el(id).value.trim();
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function monthKey(d){return d.slice(0,7);}
+function uid(){return Math.random().toString(36).slice(2,9);}
+const BN_MONTHS=["জানুয়ারি","ফেব্রুয়ারি","মার্চ","এপ্রিল","মে","জুন","জুলাই","আগস্ট","সেপ্টেম্বর","অক্টোবর","নভেম্বর","ডিসেম্বর"];
+function monthLabel(mk){const[y,m]=mk.split('-');return`${BN_MONTHS[+m-1]} ${y}`;}
+function fmtDate(d){const[,m,day]=d.split('-');return`${+day} ${BN_MONTHS[+m-1]}`;}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function allMonths(){
+  const s=new Set([monthKey(todayStr()),...Object.keys(logs)]);
+  return[...s].sort().reverse();
+}
+function getQty(cId,date){return((logs[monthKey(date)]||{})[cId]||{})[date]||0;}
+function getPaid(cId,mk){return(payments[cId]||{})[mk]||0;}
+
+function custMonthDetail(cId,mk){
+  const c=customers.find(x=>x.id===cId);
+  if(!c)return{entries:[],meals:0,bill:0,paid:0,due:0};
+  const dl=(logs[mk]||{})[cId]||{};
+  const entries=Object.entries(dl).filter(([,v])=>v>0).sort(([a],[b])=>a.localeCompare(b))
+    .map(([date,qty])=>({date,qty:Number(qty),amount:Number(qty)*(Number(c.price)||0)}));
+  const meals=entries.reduce((s,e)=>s+e.qty,0);
+  const bill=meals*(Number(c.price)||0);
+  const paid=getPaid(cId,mk);
+  return{entries,meals,bill,paid,due:bill-paid};
+}
+
+function custAllMonths(cId){
+  const months=allMonths();
+  return months.map(mk=>{const d=custMonthDetail(cId,mk);return{mk,...d};}).filter(m=>m.meals>0);
+}
+
+// Date range filter
+function dateInRange(date){
+  const from=el('exp-from').value, to=el('exp-to').value;
+  if(from&&date<from)return false;
+  if(to&&date>to)return false;
+  return true;
+}
+function monthInRange(mk){
+  const from=el('exp-from').value, to=el('exp-to').value;
+  const mStart=mk+'-01', mEnd=mk+'-31';
+  if(from&&mEnd<from)return false;
+  if(to&&mStart>to)return false;
+  return true;
+}
+
+// ═══════════════════════════════════════════════
+// INIT & TABS
+// ═══════════════════════════════════════════════
+function init(){
+  el('daily-date').value=todayStr();
+  el('header-month').textContent=monthLabel(monthKey(todayStr()));
+  const t=todayStr();
+  el('exp-from').value=t.slice(0,8)+'01';
+  el('exp-to').value=t;
+  renderDaily();
+}
+let toastT;
+function showToast(msg){const t=el('toast');t.textContent=msg;t.style.display='block';t.className='fadein';clearTimeout(toastT);toastT=setTimeout(()=>{t.style.display='none';},2600);}
+function switchTab(tab){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  el('tab-'+tab).classList.add('active');el('nav-'+tab).classList.add('active');
+  activeTab=tab;
+  if(tab==='customers')renderCustomers();
+  if(tab==='daily')renderDaily();
+  if(tab==='monthly')renderMonthly();
+  if(tab==='report'){renderExportCustList();}
+}
+function refreshCurrentTab(){switchTab(activeTab);}
+
+// ═══════════════════════════════════════════════
+// CUSTOMERS TAB
+// ═══════════════════════════════════════════════
+function renderCustomers(){
+  const q=(el('cust-search').value||'').toLowerCase();
+  const filtered=customers.filter(c=>c.name.toLowerCase().includes(q)||(c.phone||'').includes(q));
+  el('cust-search').placeholder=`🔍 খুঁজুন... (${customers.length} জন)`;
+  const list=el('cust-list');
+  if(!filtered.length){list.innerHTML='<div class="empty">কোনো কাস্টমার নেই</div>';return;}
+  list.innerHTML=filtered.map((c,i)=>`
+    <div class="cust-item anim" onclick="openModal('${c.id}')">
+      <div style="width:34px;height:34px;border-radius:9px;background:rgba(59,158,255,.1);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:var(--blue);flex-shrink:0;">${customers.indexOf(c)+1}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:14px;">${esc(c.name)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+          ${c.phone?`<span>📞 ${esc(c.phone)}</span>`:''}
+          ${c.price?`<span style="color:var(--gold)">৳${c.price}/খাবার</span>`:''}
+        </div>
+      </div>
+      <div style="display:flex;gap:5px;align-items:center;">
+        <span style="font-size:10px;color:var(--blue);background:rgba(59,158,255,.1);border-radius:7px;padding:3px 7px;white-space:nowrap;">বিস্তারিত →</span>
+        <button class="icon-btn" style="background:rgba(59,158,255,.1);color:var(--blue);" onclick="event.stopPropagation();startEdit('${c.id}')">✏️</button>
+        <button class="icon-btn" style="background:rgba(248,113,113,.1);color:var(--red);" onclick="event.stopPropagation();deleteCust('${c.id}')">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+function submitCustomer(){
+  const name=v('f-name'),phone=v('f-phone'),price=v('f-price');
+  if(!name){showToast('নাম দিন!');return;}
+  if(editId){customers=customers.map(c=>c.id===editId?{...c,name,phone,price}:c);showToast('আপডেট ✓');cancelEdit();}
+  else{customers.push({id:uid(),name,phone,price});showToast('যোগ হয়েছে ✓');}
+  el('f-name').value='';el('f-phone').value='';el('f-price').value='';
+  writeCustomers(); renderCustomers(); renderExportCustList();
+}
+function startEdit(id){
+  const c=customers.find(x=>x.id===id);if(!c)return;
+  editId=id;el('f-name').value=c.name;el('f-phone').value=c.phone||'';el('f-price').value=c.price||'';
+  el('cust-form-title').textContent='✏️ এডিট';el('cust-submit-btn').textContent='আপডেট';el('cust-cancel-btn').style.display='';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function cancelEdit(){
+  editId=null;el('f-name').value='';el('f-phone').value='';el('f-price').value='';
+  el('cust-form-title').textContent='➕ নতুন কাস্টমার';el('cust-submit-btn').textContent='যোগ করুন';el('cust-cancel-btn').style.display='none';
+}
+function deleteCust(id){
+  if(!confirm('ডিলিট করবেন?'))return;
+  customers=customers.filter(c=>c.id!==id);delCustDB(id);showToast('ডিলিট হয়েছে');
+  selectedCusts.delete(id); renderCustomers(); renderExportCustList();
+}
+
+// ═══════════════════════════════════════════════
+// DAILY TAB
+// ═══════════════════════════════════════════════
+function renderDaily(){
+  const date=el('daily-date').value||todayStr();
+  el('daily-today-badge').style.display=date===todayStr()?'block':'none';
+  let tm=0,tb=0;
+  const list=el('daily-list');
+  if(!customers.length){list.innerHTML='<div class="empty">আগে কাস্টমার যোগ করুন</div>';return;}
+  list.innerHTML=customers.map((c,i)=>{
+    const qty=getQty(c.id,date),has=qty>0;
+    tm+=qty;tb+=qty*(Number(c.price)||0);
+    return`<div class="daily-item ${has?'has-entry':''}">
+      <div style="width:30px;height:30px;border-radius:8px;background:${has?'rgba(52,211,153,.15)':'rgba(59,158,255,.1)'};display:flex;align-items:center;justify-content:center;font-size:11px;color:${has?'var(--green)':'var(--blue)'};font-weight:800;flex-shrink:0;">${i+1}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:13px;">${esc(c.name)}</div>
+        <div style="font-size:11px;color:var(--muted);">${c.price?`৳${c.price}/খাবার`:''} ${has&&c.price?`<span style="color:var(--gold);font-weight:700;">→ ৳${qty*Number(c.price)}</span>`:''}</div>
+      </div>
+      <div class="qty-ctrl">
+        <button class="qty-btn qty-minus" onclick="chQty('${c.id}','${date}',-1)" ${qty<=0?'disabled style="opacity:.3"':''}>−</button>
+        <input class="qty-input" style="border-color:${has?'var(--green)':'var(--border)'};" type="number" min="0" value="${qty||''}" placeholder="0" oninput="inpQty('${c.id}','${date}',this.value)">
+        <button class="qty-btn qty-plus" onclick="chQty('${c.id}','${date}',1)">+</button>
+      </div>
     </div>`;
   }).join('');
+  el('daily-total-meals').textContent=`${tm}টি`;
+  el('daily-total-bill').textContent=`৳${tb.toLocaleString()}`;
+}
+function chQty(cId,date,d){
+  const q=Math.max(0,getQty(cId,date)+d);
+  const mk=monthKey(date);
+  if(!logs[mk])logs[mk]={};if(!logs[mk][cId])logs[mk][cId]={};
+  logs[mk][cId][date]=q;writeLog(cId,date,q);renderDaily();
+}
+function inpQty(cId,date,val){
+  const q=Math.max(0,parseInt(val)||0);
+  const mk=monthKey(date);
+  if(!logs[mk])logs[mk]={};if(!logs[mk][cId])logs[mk][cId]={};
+  logs[mk][cId][date]=q;
+  clearTimeout(syncTimer);syncTimer=setTimeout(()=>writeLog(cId,date,q),800);
+  let tm=0,tb=0;customers.forEach(c=>{const qq=getQty(c.id,date);tm+=qq;tb+=qq*(Number(c.price)||0);});
+  el('daily-total-meals').textContent=`${tm}টি`;el('daily-total-bill').textContent=`৳${tb.toLocaleString()}`;
 }
 
-function closeModal(){document.getElementById('modal-overlay').classList.remove('open');modalPersonId=null;}
-function closeModalOutside(ev){if(ev.target===document.getElementById('modal-overlay'))closeModal();}
-
-// ── Export ──
-function fillExportCard(){
-  const p=persons.find(x=>x.id===modalPersonId);if(!p)return null;
-  const mk=document.getElementById('mdl-month-sel').value||allMonths()[0];
-  const{ents,meals,bill}=pStats(p.id,mk);
-  const sorted=[...ents].sort((a,b)=>{const d=a.entry_date.localeCompare(b.entry_date);return d!==0?d:(MT_ORDER[a.meal_time]||0)-(MT_ORDER[b.meal_time]||0);});
-  document.getElementById('ec-name').textContent=p.name;
-  document.getElementById('ec-sub').textContent=(p.phone?`📞 ${p.phone}  •  `:'')+monthLabel(mk);
-  document.getElementById('ec-meals').textContent=`${meals}টি`;
-  document.getElementById('ec-bill').textContent=bill>0?`৳${bill.toLocaleString()}`:'—';
-  document.getElementById('ec-days').textContent=`${ents.length}টি`;
-  document.getElementById('ec-date').textContent=new Date().toLocaleDateString('bn-BD');
-  document.getElementById('ec-tot-qty').textContent=`${meals}টি`;
-  document.getElementById('ec-tot-amt').textContent=bill>0?`৳${bill.toLocaleString()}`:'—';
-  document.getElementById('ec-rows').innerHTML=sorted.map(e=>{const mt=MT[e.meal_time]||MT.morning;return`
-    <tr><td>${fmtDate(e.entry_date)}</td><td style="text-align:center;">${mt.icon} ${mt.label}</td>
-    <td style="text-align:center;color:#3b9eff;font-weight:700;">${e.qty}টি</td>
-    <td style="text-align:center;color:#f0b429;">${Number(e.amount)>0?`৳${Number(e.amount).toLocaleString()}`:'—'}</td></tr>`;}).join('');
-  return{p,mk,meals,bill};
+// ═══════════════════════════════════════════════
+// MONTHLY TAB
+// ═══════════════════════════════════════════════
+function renderMonthly(){
+  const months=allMonths();
+  const sel=el('monthly-select'),cur=sel.value||months[0];
+  sel.innerHTML=months.map(m=>`<option value="${m}"${m===cur?' selected':''}>${monthLabel(m)}</option>`).join('');
+  const mk=sel.value||months[0];
+  const data=customers.map(c=>{const d=custMonthDetail(c.id,mk);return{...c,...d};}).filter(c=>c.meals>0);
+  const tm=data.reduce((s,c)=>s+c.meals,0),tb=data.reduce((s,c)=>s+c.bill,0),tpaid=data.reduce((s,c)=>s+c.paid,0);
+  el('m-custs').textContent=`${data.length}জন`;el('m-meals').textContent=`${tm}টি`;
+  el('m-bill').textContent=`৳${tb.toLocaleString()}`;el('m-due').textContent=`৳${(tb-tpaid).toLocaleString()}`;
+  const list=el('monthly-list');
+  if(!data.length){list.innerHTML='<div class="empty">এই মাসে কোনো ডেটা নেই</div>';return;}
+  list.innerHTML=data.map((c,i)=>`
+    <div class="month-item anim" onclick="openModal('${c.id}')">
+      <div style="width:32px;height:32px;border-radius:9px;background:rgba(240,180,41,.1);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--gold);font-size:12px;flex-shrink:0;">${i+1}</div>
+      <div style="flex:1;"><div style="font-weight:700;font-size:13px;">${esc(c.name)}</div>${c.phone?`<div style="font-size:10px;color:var(--muted);">📞 ${esc(c.phone)}</div>`:''}</div>
+      <div style="text-align:right;">
+        <div style="font-size:13px;color:var(--gold);font-weight:800;">৳${c.bill.toLocaleString()}</div>
+        ${c.paid>0?`<div style="font-size:10px;color:var(--green);">জমা: ৳${c.paid.toLocaleString()}</div>`:''}
+        ${c.due>0?`<div style="font-size:10px;color:var(--red);">বাকি: ৳${c.due.toLocaleString()}</div>`:''}
+        <div style="font-size:10px;color:var(--muted);">${c.meals}টি</div>
+      </div>
+    </div>`).join('');
 }
-async function exportPNG(){const info=fillExportCard();if(!info)return;showToast('⏳ ছবি তৈরি হচ্ছে...',4000);try{const c=await html2canvas(document.getElementById('export-card'),{backgroundColor:'#080f18',scale:3,useCORS:true,logging:false});const a=document.createElement('a');a.download=`${info.p.name}_${monthLabel(info.mk)}.png`;a.href=c.toDataURL('image/png');a.click();showToast('✓ PNG ডাউনলোড হচ্ছে');}catch{showToast('❌ ছবি তৈরি হয়নি');}}
-async function exportPDF(){const info=fillExportCard();if(!info)return;showToast('⏳ PDF তৈরি হচ্ছে...',4000);try{const c=await html2canvas(document.getElementById('export-card'),{backgroundColor:'#080f18',scale:3,useCORS:true,logging:false});const{jsPDF}=window.jspdf;const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});const iw=180,ih=(c.height*iw)/c.width;pdf.addImage(c.toDataURL('image/png'),'PNG',15,15,iw,ih);pdf.save(`${info.p.name}_${monthLabel(info.mk)}.pdf`);showToast('✓ PDF ডাউনলোড হচ্ছে');}catch{showToast('❌ PDF তৈরি হয়নি');}}
-function exportCSV(){const p=persons.find(x=>x.id===modalPersonId);if(!p)return;const mk=document.getElementById('mdl-month-sel').value||allMonths()[0];const{ents,meals,bill}=pStats(p.id,mk);const sorted=[...ents].sort((a,b)=>{const d=a.entry_date.localeCompare(b.entry_date);return d!==0?d:(MT_ORDER[a.meal_time]||0)-(MT_ORDER[b.meal_time]||0);});let csv='\uFEFF';csv+=`ঘরের স্বাদ - ${p.name}\nমাস,${monthLabel(mk)}\n`;if(p.phone)csv+=`ফোন,${p.phone}\n`;csv+=`\nতারিখ,সময়,খাবার (টি),টাকা (৳),নোট\n`;sorted.forEach(e=>{const mt=MT[e.meal_time]||MT.morning;csv+=`${e.entry_date},${mt.label},${e.qty},${Number(e.amount)||0},"${(e.note||'').replace(/"/g,'""')}"\n`;});csv+=`\nমোট,,${meals},${bill}\n`;const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${p.name}_${monthLabel(mk)}.csv`;a.click();URL.revokeObjectURL(a.href);showToast('✓ CSV ডাউনলোড হচ্ছে');}
 
-async function shareReport(){const mk=document.getElementById('rep-month-sel').value||allMonths()[0];const data=persons.map(p=>{const{meals,bill}=pStats(p.id,mk);return{...p,meals,bill};}).filter(p=>p.meals>0);if(!data.length){showToast('এই মাসে কোনো ডেটা নেই');return;}const totM=data.reduce((s,p)=>s+p.meals,0),totB=data.reduce((s,p)=>s+p.bill,0);let txt=`🍱 ঘরের স্বাদ\n📅 ${monthLabel(mk)}\n${'─'.repeat(26)}\n`;data.forEach((p,i)=>{txt+=`${i+1}. ${p.name}${p.phone?` (${p.phone})`:''}\n   খাবার: ${p.meals}টি${p.bill>0?` | বিল: ৳${p.bill.toLocaleString()}`:''}\n`;});txt+=`${'─'.repeat(26)}\nমোট: ${data.length}জন | ${totM}টি${totB>0?` | ৳${totB.toLocaleString()}`:''}`;if(navigator.share){try{await navigator.share({title:'ঘরের স্বাদ',text:txt});return;}catch{}}try{await navigator.clipboard.writeText(txt);showToast('✓ কপি হয়েছে');}catch{showToast('শেয়ার করা যায়নি');}}
+// ═══════════════════════════════════════════════
+// EXPORT TAB
+// ═══════════════════════════════════════════════
+function renderExportCustList(){
+  const list=el('exp-cust-list');
+  if(!customers.length){list.innerHTML='<div class="empty">কোনো কাস্টমার নেই</div>';return;}
+  list.innerHTML=customers.map(c=>`
+    <div class="cb-item ${selectedCusts.has(c.id)?'selected':''}" onclick="toggleCust('${c.id}')">
+      <div class="cb-box">${selectedCusts.has(c.id)?'<svg width="12" height="12" viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg>':''}</div>
+      <div style="flex:1;"><div style="font-weight:600;font-size:13px;">${esc(c.name)}</div>${c.phone?`<div style="font-size:11px;color:var(--muted);">📞 ${esc(c.phone)}</div>`:''}</div>
+      ${c.price?`<div style="font-size:11px;color:var(--gold);">৳${c.price}/খাবার</div>`:''}
+    </div>`).join('');
+}
+function toggleCust(id){selectedCusts.has(id)?selectedCusts.delete(id):selectedCusts.add(id);renderExportCustList();}
+function selectAll(){customers.forEach(c=>selectedCusts.add(c.id));renderExportCustList();}
+function clearAll(){selectedCusts.clear();renderExportCustList();}
 
-// ── Boot ──
-(async function(){
-  setSyncState('syncing','সংযুক্ত হচ্ছে...');
-  const ok=await loadData();
-  document.getElementById('loading-screen').classList.remove('show');
-  if(!ok)showToast('❌ Supabase সংযোগ ব্যর্থ',4000);
-  document.getElementById('home-month-sel').value=allMonths()[0];
-  document.getElementById('rep-month-sel').value=allMonths()[0];
-  document.getElementById('entry-date').value=new Date().toISOString().slice(0,10);
-  renderAll();startPolling();
-})();
+function setRange(type){
+  const now=new Date();
+  let from,to=todayStr();
+  if(type==='this-month'){from=todayStr().slice(0,8)+'01';}
+  else if(type==='last-month'){const d=new Date(now.getFullYear(),now.getMonth()-1,1);from=d.toISOString().slice(0,8)+'01';to=new Date(now.getFullYear(),now.getMonth(),0).toISOString().slice(0,10);}
+  else if(type==='3months'){const d=new Date(now.getFullYear(),now.getMonth()-2,1);from=d.toISOString().slice(0,8)+'01';}
+  else{from='2020-01-01';}
+  el('exp-from').value=from;el('exp-to').value=to;
+}
+
+// Get export data
+function getExportData(){
+  const custs=customers.filter(c=>selectedCusts.has(c.id));
+  if(!custs.length){showToast('কাস্টমার বেছে নিন');return null;}
+  const months=allMonths().filter(mk=>monthInRange(mk));
+  return custs.map(c=>{
+    const monthData=months.map(mk=>{
+      const {entries,meals,bill,paid,due}=custMonthDetail(c.id,mk);
+      const filteredEntries=entries.filter(e=>dateInRange(e.date));
+      const fMeals=filteredEntries.reduce((s,e)=>s+e.qty,0);
+      const fBill=fMeals*(Number(c.price)||0);
+      return{mk,entries:filteredEntries,meals:fMeals,bill:fBill,paid,due:fBill-paid};
+    }).filter(m=>m.meals>0);
+    const totalMeals=monthData.reduce((s,m)=>s+m.meals,0);
+    const totalBill=monthData.reduce((s,m)=>s+m.bill,0);
+    const totalPaid=monthData.reduce((s,m)=>s+m.paid,0);
+    return{...c,monthData,totalMeals,totalBill,totalPaid,totalDue:totalBill-totalPaid};
+  });
+}
+
+// ═══════════════════════════════════════════════
+// PDF EXPORT
+// ═══════════════════════════════════════════════
+function exportPDF(){
+  const data=getExportData();if(!data)return;
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  let y=15;
+  const from=el('exp-from').value,to=el('exp-to').value;
+  // Title
+  doc.setFontSize(18);doc.setTextColor(240,180,41);doc.text('Ghorer Shad',14,y);y+=7;
+  doc.setFontSize(10);doc.setTextColor(100,130,160);doc.text(`Report: ${from} to ${to}`,14,y);y+=10;
+
+  data.forEach((c,ci)=>{
+    if(y>260){doc.addPage();y=15;}
+    // Customer header
+    doc.setFillColor(14,28,43);doc.rect(14,y,182,10,'F');
+    doc.setFontSize(12);doc.setTextColor(240,180,41);doc.text(c.name+(c.phone?` | ${c.phone}`:''),16,y+7);
+    y+=14;
+    // Month tables
+    c.monthData.forEach(m=>{
+      if(y>250){doc.addPage();y=15;}
+      doc.setFontSize(10);doc.setTextColor(59,158,255);doc.text(monthLabel(m.mk),14,y);y+=4;
+      // Daily rows
+      doc.autoTable({
+        startY:y,margin:{left:14,right:14},
+        head:[['তারিখ','খাবার','বিল (৳)']],
+        body:m.entries.map(e=>[fmtDate(e.date),`${e.qty}টি`,e.amount>0?e.amount.toLocaleString():'—']),
+        foot:[[{content:'মোট',styles:{fontStyle:'bold'}},`${m.meals}টি`,m.bill>0?`৳${m.bill.toLocaleString()}`:'—']],
+        styles:{fontSize:9,cellPadding:2,textColor:[226,234,244]},
+        headStyles:{fillColor:[30,51,71],textColor:[240,180,41],fontStyle:'bold'},
+        footStyles:{fillColor:[20,35,50],textColor:[240,180,41],fontStyle:'bold'},
+        alternateRowStyles:{fillColor:[18,34,51]},
+        bodyStyles:{fillColor:[14,28,43]},
+        theme:'grid'
+      });
+      y=doc.lastAutoTable.finalY+4;
+      // Paid/due
+      doc.setFontSize(9);doc.setTextColor(52,211,153);
+      doc.text(`জমা: ৳${m.paid.toLocaleString()}  |  বাকি: ৳${m.due.toLocaleString()}`,14,y);y+=8;
+    });
+    // Customer total
+    doc.setFontSize(10);doc.setTextColor(240,180,41);
+    doc.text(`${c.name} — মোট খাবার: ${c.totalMeals}টি | মোট বিল: ৳${c.totalBill.toLocaleString()} | জমা: ৳${c.totalPaid.toLocaleString()} | বাকি: ৳${c.totalDue.toLocaleString()}`,14,y);
+    y+=12;
+    if(ci<data.length-1){doc.setDrawColor(26,51,71);doc.line(14,y-5,196,y-5);}
+  });
+  doc.save(`GhorerShad_${el('exp-from').value}_${el('exp-to').value}.pdf`);
+  showToast('PDF তৈরি হচ্ছে ✓');
+}
+
+// ═══════════════════════════════════════════════
+// CSV EXPORT
+// ═══════════════════════════════════════════════
+function exportCSV(){
+  const data=getExportData();if(!data)return;
+  let csv='নাম,মোবাইল,মাস,তারিখ,খাবার,বিল (৳),জমা (৳),বাকি (৳)\n';
+  data.forEach(c=>{
+    c.monthData.forEach(m=>{
+      m.entries.forEach(e=>{
+        csv+=`"${c.name}","${c.phone||''}","${monthLabel(m.mk)}","${fmtDate(e.date)}",${e.qty},${e.amount},,""\n`;
+      });
+      csv+=`"${c.name}","${c.phone||''}","${monthLabel(m.mk)}","মোট",${m.meals},${m.bill},${m.paid},${m.due}\n`;
+      csv+='\n';
+    });
+    csv+=`"${c.name}","","সব মাস মোট","",${c.totalMeals},${c.totalBill},${c.totalPaid},${c.totalDue}\n\n`;
+  });
+  dlFile(csv,`GhorerShad_${el('exp-from').value}_${el('exp-to').value}.csv`,'text/csv;charset=utf-8;');
+  showToast('CSV তৈরি হচ্ছে ✓');
+}
+
+function exportTextShare(){
+  const data=getExportData();if(!data)return;
+  let t=`🍱 ঘরের স্বাদ\n📅 ${el('exp-from').value} থেকে ${el('exp-to').value}\n${'━'.repeat(28)}\n`;
+  data.forEach((c,i)=>{
+    t+=`\n${i+1}. ${c.name}${c.phone?` (${c.phone})`:''}\n`;
+    c.monthData.forEach(m=>{t+=`   ${monthLabel(m.mk)}: ${m.meals}টি | ৳${m.bill.toLocaleString()} | জমা: ৳${m.paid.toLocaleString()} | বাকি: ৳${m.due.toLocaleString()}\n`;});
+    t+=`   ─ মোট: ${c.totalMeals}টি | ৳${c.totalBill.toLocaleString()} | বাকি: ৳${c.totalDue.toLocaleString()}\n`;
+  });
+  if(navigator.share){navigator.share({title:'ঘরের স্বাদ রিপোর্ট',text:t}).catch(()=>{});}
+  else{navigator.clipboard.writeText(t).then(()=>showToast('কপি হয়েছে ✓'));}
+}
+
+function dlFile(content,filename,type){
+  const blob=new Blob(['\uFEFF'+content],{type});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();
+}
+
+// ═══════════════════════════════════════════════
+// CUSTOMER MODAL
+// ═══════════════════════════════════════════════
+function openModal(cId){
+  modalCustId=cId;
+  const c=customers.find(x=>x.id===cId);if(!c)return;
+  el('modal-cust-name').textContent=c.name;
+  el('modal-cust-phone').textContent=c.phone?`📞 ${c.phone}`:'';
+  el('modal-cust-phone').style.display=c.phone?'':'none';
+  // populate month selects
+  const months=allMonths();
+  [el('modal-month-select'),el('pay-month-sel')].forEach(s=>{
+    s.innerHTML=months.map(m=>`<option value="${m}">${monthLabel(m)}</option>`).join('');
+    s.value=months[0];
+  });
+  el('modal-overlay').classList.add('open');
+  setModalTab('month');
+}
+
+function setModalTab(tab){
+  modalTab=tab;
+  el('mdl-month-view').style.display=tab==='month'?'':'none';
+  el('mdl-all-view').style.display=tab==='all'?'':'none';
+  el('mdl-pay-view').style.display=tab==='pay'?'':'none';
+  ['month','all','pay'].forEach(t=>{
+    const btn=el(`mdl-tab-${t}-btn`);
+    btn.className='btn btn-sm '+(t===tab?'btn-blue':'btn-ghost');
+  });
+  if(tab==='month')renderModalMonth();
+  if(tab==='all')renderModalAll();
+  if(tab==='pay')renderPayHistory();
+}
+
+function renderModalMonth(){
+  const c=customers.find(x=>x.id===modalCustId);if(!c)return;
+  const mk=el('modal-month-select').value||allMonths()[0];
+  const {entries,meals,bill,paid,due}=custMonthDetail(c.id,mk);
+  el('mdl-name').textContent=c.name;
+  el('mdl-phone').textContent=c.phone?`📞 ${c.phone}`:'';el('mdl-phone').style.display=c.phone?'':'none';
+  el('mdl-month').textContent=monthLabel(mk);
+  el('mdl-footer-date').textContent=new Date().toLocaleDateString('bn-BD');
+  el('mdl-pills').innerHTML=`
+    <div class="pill" style="background:rgba(59,158,255,.1);border:1px solid rgba(59,158,255,.1);"><div class="pill-val" style="color:var(--blue);">${meals}টি</div><div class="pill-label">খাবার</div></div>
+    <div class="pill" style="background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.1);"><div class="pill-val" style="color:var(--gold);">${bill>0?`৳${bill.toLocaleString()}`:'—'}</div><div class="pill-label">বিল</div></div>
+    <div class="pill" style="background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.1);"><div class="pill-val" style="color:var(--green);">${paid>0?`৳${paid.toLocaleString()}`:'—'}</div><div class="pill-label">জমা</div></div>
+    <div class="pill" style="background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.1);"><div class="pill-val" style="color:var(--red);">${due>0?`৳${due.toLocaleString()}`:'—'}</div><div class="pill-label">বাকি</div></div>`;
+  const tbl=el('mdl-table');
+  if(!entries.length){tbl.innerHTML='<div style="text-align:center;color:var(--muted);font-size:13px;padding:18px 0;">এই মাসে কোনো ডেটা নেই</div>';return;}
+  tbl.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 50px 72px;padding:4px 5px;margin-bottom:2px;gap:4px;">
+      <span style="font-size:10px;color:var(--muted);font-weight:700;">তারিখ</span><span style="font-size:10px;color:var(--muted);font-weight:700;text-align:center;">খাবার</span><span style="font-size:10px;color:var(--muted);font-weight:700;text-align:center;">টাকা</span>
+    </div>
+    ${entries.map((e,i)=>`<div style="display:grid;grid-template-columns:1fr 50px 72px;align-items:center;padding:6px 5px;border-radius:5px;gap:4px;${i%2===0?'background:rgba(255,255,255,.025)':''}">
+      <div style="font-size:12px;font-weight:500;">${fmtDate(e.date)}</div>
+      <div style="text-align:center;"><span class="badge badge-blue">${e.qty}টি</span></div>
+      <div style="text-align:center;font-size:12px;color:var(--gold);font-weight:600;">${e.amount>0?`৳${e.amount.toLocaleString()}`:'—'}</div>
+    </div>`).join('')}
+    <div style="display:grid;grid-template-columns:1fr 50px 72px;align-items:center;padding:9px 5px;margin-top:7px;border-top:1px solid var(--border);background:rgba(240,180,41,.06);border-radius:7px;gap:4px;">
+      <div style="font-size:12px;color:var(--gold);font-weight:800;">মোট</div>
+      <div style="text-align:center;font-size:12px;color:var(--blue);font-weight:800;">${meals}টি</div>
+      <div style="text-align:center;font-size:13px;color:var(--gold);font-weight:800;">${bill>0?`৳${bill.toLocaleString()}`:'—'}</div>
+    </div>`;
+}
+
+function renderModalAll(){
+  const c=customers.find(x=>x.id===modalCustId);if(!c)return;
+  const allData=custAllMonths(c.id);
+  const totalMeals=allData.reduce((s,m)=>s+m.meals,0);
+  const totalBill=allData.reduce((s,m)=>s+m.bill,0);
+  const totalPaid=allData.reduce((s,m)=>s+m.paid,0);
+  const totalDue=totalBill-totalPaid;
+
+  let html=`<div class="gcard" style="margin-bottom:10px;">
+    <div style="font-weight:800;font-size:15px;color:var(--text);">${esc(c.name)}</div>
+    ${c.phone?`<div style="font-size:12px;color:var(--muted);">📞 ${esc(c.phone)}</div>`:''}
+    <div class="pills" style="margin-top:4px;">
+      <div class="pill" style="background:rgba(59,158,255,.1);border:1px solid rgba(59,158,255,.1);"><div class="pill-val" style="color:var(--blue);">${totalMeals}টি</div><div class="pill-label">মোট খাবার</div></div>
+      <div class="pill" style="background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.1);"><div class="pill-val" style="color:var(--gold);">৳${totalBill.toLocaleString()}</div><div class="pill-label">মোট বিল</div></div>
+      <div class="pill" style="background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.1);"><div class="pill-val" style="color:var(--green);">৳${totalPaid.toLocaleString()}</div><div class="pill-label">মোট জমা</div></div>
+      <div class="pill" style="background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.1);"><div class="pill-val" style="color:var(--red);">৳${totalDue.toLocaleString()}</div><div class="pill-label">মোট বাকি</div></div>
+    </div>
+  </div>`;
+
+  if(!allData.length){html+='<div class="empty">কোনো ডেটা নেই</div>';}
+  else{
+    allData.forEach(m=>{
+      html+=`<div class="gcard" style="margin-bottom:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-weight:700;font-size:13px;color:var(--blue);">${monthLabel(m.mk)}</div>
+          <div style="text-align:right;font-size:11px;">
+            <span class="badge badge-blue">${m.meals}টি</span>
+            <span class="badge badge-gold" style="margin-left:4px;">৳${m.bill.toLocaleString()}</span>
+            ${m.paid>0?`<span class="badge badge-green" style="margin-left:4px;">জমা ৳${m.paid.toLocaleString()}</span>`:''}
+            ${m.due>0?`<span class="badge badge-red" style="margin-left:4px;">বাকি ৳${m.due.toLocaleString()}</span>`:''}
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 45px 68px;gap:3px;margin-top:6px;">
+          <span style="font-size:9px;color:var(--muted);">তারিখ</span><span style="font-size:9px;color:var(--muted);text-align:center;">খাবার</span><span style="font-size:9px;color:var(--muted);text-align:center;">টাকা</span>
+        </div>
+        ${m.entries.map((e,i)=>`<div style="display:grid;grid-template-columns:1fr 45px 68px;align-items:center;padding:5px 0;border-bottom:${i<m.entries.length-1?'1px solid rgba(255,255,255,.04)':'none'};gap:3px;">
+          <div style="font-size:12px;">${fmtDate(e.date)}</div>
+          <div style="text-align:center;"><span class="badge badge-blue">${e.qty}টি</span></div>
+          <div style="text-align:center;font-size:12px;color:var(--gold);font-weight:600;">${e.amount>0?`৳${e.amount.toLocaleString()}`:'—'}</div>
+        </div>`).join('')}
+      </div>`;
+    });
+  }
+  el('mdl-all-content').innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════
+// PAYMENT
+// ═══════════════════════════════════════════════
+function addPayment(){
+  const mk=el('pay-month-sel').value;
+  const amt=parseFloat(el('pay-amount').value)||0;
+  if(!amt){showToast('টাকার পরিমাণ দিন');return;}
+  if(!payments[modalCustId])payments[modalCustId]={};
+  payments[modalCustId][mk]=amt;
+  writePayment(modalCustId,mk,amt);
+  el('pay-amount').value='';
+  showToast('জমা সেভ হয়েছে ✓');
+  renderPayHistory();
+}
+
+function renderPayHistory(){
+  const c=customers.find(x=>x.id===modalCustId);if(!c)return;
+  const payData=payments[modalCustId]||{};
+  const months=allMonths();
+  let html='<div class="section-sep">📋 জমার ইতিহাস</div>';
+  const withData=months.filter(mk=>{const d=custMonthDetail(c.id,mk);return d.meals>0||payData[mk];});
+  if(!withData.length){html+='<div class="empty">কোনো জমা নেই</div>';el('pay-history').innerHTML=html;return;}
+  withData.forEach(mk=>{
+    const d=custMonthDetail(c.id,mk);
+    html+=`<div class="gcard" style="margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-weight:700;font-size:13px;color:var(--blue);">${monthLabel(mk)}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-top:4px;">
+        <span style="color:var(--muted);">বিল: <b style="color:var(--gold);">৳${d.bill.toLocaleString()}</b></span>
+        <span style="color:var(--muted);">জমা: <b style="color:var(--green);">৳${d.paid.toLocaleString()}</b></span>
+        <span style="color:var(--muted);">বাকি: <b style="color:${d.due>0?'var(--red)':'var(--green)'};">৳${d.due.toLocaleString()}</b></span>
+      </div>
+    </div>`;
+  });
+  el('pay-history').innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════
+// SINGLE CUSTOMER PDF / CSV / IMG
+// ═══════════════════════════════════════════════
+function downloadSinglePDF(){
+  const c=customers.find(x=>x.id===modalCustId);if(!c)return;
+  const mk=el('modal-month-select').value||allMonths()[0];
+  const {entries,meals,bill,paid,due}=custMonthDetail(c.id,mk);
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF();
+  let y=15;
+  doc.setFontSize(16);doc.setTextColor(240,180,41);doc.text('Ghorer Shad',14,y);y+=7;
+  doc.setFontSize(11);doc.setTextColor(100,130,160);doc.text(`${c.name}${c.phone?' | '+c.phone:''} | ${monthLabel(mk)}`,14,y);y+=10;
+  doc.autoTable({
+    startY:y,margin:{left:14,right:14},
+    head:[['তারিখ','খাবার','বিল (৳)']],
+    body:entries.map(e=>[fmtDate(e.date),`${e.qty}টি`,e.amount>0?`৳${e.amount.toLocaleString()}`:'—']),
+    foot:[[{content:'মোট',styles:{fontStyle:'bold'}},{content:`${meals}টি`,styles:{fontStyle:'bold'}},{content:bill>0?`৳${bill.toLocaleString()}`:'—',styles:{fontStyle:'bold'}}]],
+    styles:{fontSize:10},headStyles:{fillColor:[46,117,182]},footStyles:{fillColor:[26,58,91]},theme:'grid'
+  });
+  y=doc.lastAutoTable.finalY+6;
+  doc.setFontSize(10);doc.setTextColor(52,211,153);doc.text(`জমা: ৳${paid.toLocaleString()}  |  বাকি: ৳${due.toLocaleString()}`,14,y);
+  doc.save(`${c.name}_${monthLabel(mk)}.pdf`);showToast('PDF তৈরি হচ্ছে ✓');
+}
+
+function downloadSingleCSV(){
+  const c=customers.find(x=>x.id===modalCustId);if(!c)return;
+  const mk=el('modal-month-select').value||allMonths()[0];
+  const {entries,meals,bill,paid,due}=custMonthDetail(c.id,mk);
+  let csv=`ঘরের স্বাদ — ${c.name} — ${monthLabel(mk)}\n`;
+  if(c.phone)csv+=`মোবাইল: ${c.phone}\n`;
+  csv+='\nতারিখ,খাবার,বিল (৳)\n';
+  entries.forEach(e=>{csv+=`"${fmtDate(e.date)}",${e.qty},${e.amount}\n`;});
+  csv+=`\nমোট,${meals},${bill}\nজমা,,${paid}\nবাকি,,${due}\n`;
+  dlFile(csv,`${c.name}_${monthLabel(mk)}.csv`,'text/csv;charset=utf-8;');
+  showToast('CSV তৈরি হচ্ছে ✓');
+}
+
+function downloadAllMonthsPDF(){
+  const c=customers.find(x=>x.id===modalCustId);if(!c)return;
+  const allData=custAllMonths(c.id);
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF();
+  let y=15;
+  doc.setFontSize(16);doc.setTextColor(240,180,41);doc.text('Ghorer Shad',14,y);y+=7;
+  doc.setFontSize(11);doc.setTextColor(100,130,160);doc.text(`${c.name}${c.phone?' | '+c.phone:''} | সব মাস`,14,y);y+=10;
+  const tMeals=allData.reduce((s,m)=>s+m.meals,0),tBill=allData.reduce((s,m)=>s+m.bill,0),tPaid=allData.reduce((s,m)=>s+m.paid,0);
+  doc.setFontSize(10);doc.setTextColor(240,180,41);doc.text(`মোট: ${tMeals}টি | বিল: ৳${tBill.toLocaleString()} | জমা: ৳${tPaid.toLocaleString()} | বাকি: ৳${(tBill-tPaid).toLocaleString()}`,14,y);y+=9;
+  allData.forEach(m=>{
+    if(y>250){doc.addPage();y=15;}
+    doc.setFontSize(11);doc.setTextColor(59,158,255);doc.text(monthLabel(m.mk),14,y);y+=4;
+    doc.autoTable({
+      startY:y,margin:{left:14,right:14},
+      head:[['তারিখ','খাবার','বিল (৳)']],
+      body:m.entries.map(e=>[fmtDate(e.date),`${e.qty}টি`,e.amount>0?`৳${e.amount.toLocaleString()}`:'—']),
+      foot:[[{content:'মোট'},{content:`${m.meals}টি`},{content:m.bill>0?`৳${m.bill.toLocaleString()}`:'—'}]],
+      styles:{fontSize:9},headStyles:{fillColor:[46,117,182]},footStyles:{fillColor:[26,58,91]},theme:'grid'
+    });
+    y=doc.lastAutoTable.finalY+3;
+    doc.setFontSize(9);doc.setTextColor(52,211,153);doc.text(`জমা: ৳${m.paid.toLocaleString()}  বাকি: ৳${m.due.toLocaleString()}`,14,y);y+=7;
+  });
+  doc.save(`${c.name}_সব_মাস.pdf`);showToast('PDF তৈরি হচ্ছে ✓');
+}
+
+function downloadAllMonthsCSV(){
+  const c=customers.find(x=>x.id===modalCustId);if(!c)return;
+  const allData=custAllMonths(c.id);
+  let csv=`ঘরের স্বাদ — ${c.name} — সব মাস\n`;
+  if(c.phone)csv+=`মোবাইল: ${c.phone}\n\n`;
+  allData.forEach(m=>{
+    csv+=`${monthLabel(m.mk)}\nতারিখ,খাবার,বিল (৳)\n`;
+    m.entries.forEach(e=>{csv+=`"${fmtDate(e.date)}",${e.qty},${e.amount}\n`;});
+    csv+=`মোট,${m.meals},${m.bill}\nজমা,,${m.paid}\nবাকি,,${m.due}\n\n`;
+  });
+  const tM=allData.reduce((s,m)=>s+m.meals,0),tB=allData.reduce((s,m)=>s+m.bill,0),tP=allData.reduce((s,m)=>s+m.paid,0);
+  csv+=`সর্বমোট,${tM},${tB}\nমোট জমা,,${tP}\nমোট বাকি,,${tB-tP}\n`;
+  dlFile(csv,`${c.name}_সব_মাস.csv`,'text/csv;charset=utf-8;');showToast('CSV তৈরি হচ্ছে ✓');
+}
+
+async function downloadDetailImg(){
+  const c=customers.find(x=>x.id===modalCustId);if(!c)return;
+  const mk=el('modal-month-select').value||allMonths()[0];
+  const btn=el('dl-detail-img');btn.disabled=true;btn.textContent='⏳';
+  try{
+    const canvas=await html2canvas(el('modal-dl-card'),{backgroundColor:'#080f18',scale:2.5,useCORS:true,logging:false});
+    const a=document.createElement('a');a.download=`${c.name}_${monthLabel(mk)}.png`;a.href=canvas.toDataURL('image/png');a.click();
+    showToast('ছবি ডাউনলোড ✓');
+  }catch{showToast('স্ক্রিনশট নিন');}
+  btn.disabled=false;btn.textContent='📷 ছবি';
+}
+
+function closeModal(){el('modal-overlay').classList.remove('open');modalCustId=null;}
+function closeModalOutside(e){if(e.target===el('modal-overlay'))closeModal();}
 </script>
 </body>
-  </html>
+</html>
