@@ -5,163 +5,270 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="theme-color" content="#080f18">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>ঘরের স্বাদ</title>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<!-- ============================================================
+  🔧 SUPABASE CONFIG — এখানে আপনার key বসান
+  ============================================================
+  ১. https://supabase.com এ free account খুলুন
+  ২. New project বানান
+  ③. Settings → API তে যান
+  ④. নিচের দুটো জায়গায় আপনার key বসান
+  ============================================================ -->
+<script>
+  const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co'; // ← এখানে বসান
+  const SUPABASE_KEY = 'YOUR_ANON_KEY_HERE';               // ← এখানে বসান
+
+  // ⚠️ ADMIN MODE — শুধু আপনার ডিভাইসে true করুন
+  // অন্যরা যে link পাবে তাতে এটা false থাকবে
+  // অথবা URL এ ?admin=1 দিলে admin mode হবে
+  const FORCE_READONLY = false;
+</script>
 
 <style>
-/* ── SETUP ── */
-#setup-screen{position:fixed;inset:0;background:#080f18;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;font-family:'Hind Siliguri',sans-serif;overflow-y:auto;}
-.setup-box{background:#0e1c2b;border:1px solid #1a3347;border-radius:20px;padding:24px;width:100%;max-width:440px;}
-.setup-logo{text-align:center;font-size:36px;margin-bottom:6px;}
-.setup-title{text-align:center;font-size:20px;font-weight:800;color:#f0b429;margin-bottom:4px;}
-.setup-sub{text-align:center;font-size:12px;color:#4a6a88;margin-bottom:18px;}
-.setup-step{background:#132233;border-radius:12px;padding:12px 14px;margin-bottom:10px;border-left:3px solid #3b9eff;}
-.setup-step-num{font-size:11px;color:#3b9eff;font-weight:700;margin-bottom:4px;}
-.setup-step-text{font-size:13px;color:#e2eaf4;line-height:1.65;}
-.setup-step a{color:#f0b429;text-decoration:none;}
-.s-inp{width:100%;background:#080f18;border:1px solid #1a3347;border-radius:10px;padding:10px 12px;color:#e2eaf4;font-size:13px;font-family:'Hind Siliguri',sans-serif;margin-top:6px;}
-.s-inp::placeholder{color:#4a6a88;}
-.s-inp:focus{outline:none;border-color:#3b9eff;}
-.setup-btn{width:100%;background:linear-gradient(135deg,#1a6fd4,#3b9eff);border:none;border-radius:12px;padding:13px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:'Hind Siliguri',sans-serif;margin-top:12px;}
-.setup-err{color:#f87171;font-size:12px;text-align:center;margin-top:8px;display:none;}
-
-/* ── MAIN ── */
-:root{--bg:#080f18;--card:#0e1c2b;--card2:#132233;--border:#1a3347;--gold:#f0b429;--blue:#3b9eff;--green:#34d399;--red:#f87171;--text:#e2eaf4;--muted:#4a6a88;}
+:root {
+  --bg:#080f18; --card:#0e1c2b; --card2:#132233; --border:#1a3347;
+  --gold:#f0b429; --blue:#3b9eff; --green:#34d399; --red:#f87171;
+  --text:#e2eaf4; --muted:#4a6a88;
+}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-body{font-family:'Hind Siliguri',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:480px;margin:0 auto;padding-bottom:74px;}
+body{font-family:'Hind Siliguri',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:480px;margin:0 auto;padding-bottom:74px;overscroll-behavior:none;}
 input,select,button{font-family:inherit;}
 input:focus,select:focus{outline:none;border-color:var(--blue)!important;}
-::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
 button:active{opacity:.75;transform:scale(.96);}
-@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.anim{animation:fadeUp .22s ease;}.fadein{animation:fadeIn .18s ease;}.slide{animation:slideUp .3s cubic-bezier(.32,.72,0,1);}
-#header{background:linear-gradient(135deg,#060e1a,#0c1e35);padding:14px 18px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50;}
-.logo-box{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--gold),#c06000);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;box-shadow:0 4px 14px rgba(240,180,41,.3);}
-.htitle{font-weight:700;font-size:15px;}.hsub{font-size:10px;color:var(--muted);}
-#sync-dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-left:5px;}
-#sync-dot.syncing{background:var(--gold);animation:pulse 1s infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.anim{animation:fadeUp .25s ease;}
+.fadein{animation:fadeIn .2s ease;}
+.slide{animation:slideUp .32s cubic-bezier(.32,.72,0,1);}
+
+/* Loading screen */
+#loading-screen{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
+#loading-screen .logo{width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,var(--gold),#c06000);display:flex;align-items:center;justify-content:center;font-size:32px;box-shadow:0 8px 28px rgba(240,180,41,.3);}
+#loading-screen .spin{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;}
+#loading-screen .msg{font-size:13px;color:var(--muted);}
+
+/* Setup screen */
+#setup-screen{position:fixed;inset:0;background:var(--bg);z-index:998;display:none;align-items:center;justify-content:center;padding:24px;}
+#setup-screen.show{display:flex;}
+.setup-box{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:24px;width:100%;max-width:400px;}
+.setup-box h2{font-size:17px;font-weight:800;margin-bottom:4px;}
+.setup-box p{font-size:12px;color:var(--muted);margin-bottom:18px;line-height:1.6;}
+.setup-inp{width:100%;background:#0a1525;border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);font-size:13px;margin-bottom:10px;font-family:inherit;}
+.setup-inp:focus{outline:none;border-color:var(--blue);}
+.setup-steps{background:#060d18;border-radius:12px;padding:14px;margin-bottom:16px;font-size:12px;color:var(--muted);line-height:2;}
+.setup-steps b{color:var(--text);}
+.setup-steps a{color:var(--blue);text-decoration:none;}
+
+/* Readonly banner */
+#readonly-banner{background:rgba(59,158,255,.08);border:1px solid rgba(59,158,255,.2);border-radius:12px;padding:8px 14px;margin:10px 14px 0;font-size:12px;color:var(--blue);text-align:center;display:none;}
+#readonly-banner.show{display:block;}
+
+/* Admin badge */
+#admin-badge{background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.3);border-radius:20px;padding:3px 10px;font-size:10px;color:var(--gold);margin-left:auto;display:none;}
+#admin-badge.show{display:flex;align-items:center;gap:4px;}
+
+/* Sync indicator */
+#sync-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .3s;}
+#sync-dot.syncing{background:var(--gold);animation:fadeIn .3s infinite alternate;}
+#sync-dot.ok{background:var(--green);}
 #sync-dot.err{background:var(--red);}
-.month-badge{margin-left:auto;background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.28);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--gold);font-weight:600;white-space:nowrap;}
+
+/* Header */
+#header{background:linear-gradient(135deg,#060e1a,#0c1e35);padding:15px 18px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50;}
+#header .logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--gold),#c06000);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;box-shadow:0 4px 14px rgba(240,180,41,.3);}
+#header .title{font-weight:700;font-size:16px;letter-spacing:.3px;}
+#header .sub{font-size:11px;color:var(--muted);margin-top:1px;}
+#header .month-badge{margin-left:auto;background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.28);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--gold);font-weight:600;white-space:nowrap;}
+
+/* Bottom Nav */
 #nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#060d18;border-top:1px solid var(--border);display:flex;z-index:100;}
-.nav-btn{flex:1;border:none;background:none;padding:9px 0 7px;cursor:pointer;color:var(--muted);transition:color .2s;position:relative;}
+.nav-btn{flex:1;border:none;background:none;padding:10px 0 8px;cursor:pointer;color:var(--muted);transition:color .2s;position:relative;}
 .nav-btn.active{color:var(--gold);}
-.nav-bar{position:absolute;top:0;left:50%;transform:translateX(-50%);width:26px;height:2px;background:var(--gold);border-radius:0 0 3px 3px;display:none;}
+.nav-btn .nav-bar{position:absolute;top:0;left:50%;transform:translateX(-50%);width:28px;height:2px;background:var(--gold);border-radius:0 0 3px 3px;display:none;}
 .nav-btn.active .nav-bar{display:block;}
-.nav-icon{font-size:18px;}.nav-label{font-size:10px;margin-top:1px;font-weight:400;}
+.nav-icon{font-size:19px;}
+.nav-label{font-size:10px;margin-top:2px;font-weight:400;}
 .nav-btn.active .nav-label{font-weight:700;}
-#content{padding:12px 14px 0;}
-.tab-pane{display:none;}.tab-pane.active{display:block;}
-.gcard{background:var(--card);border-radius:16px;padding:13px;border:1px solid var(--border);display:flex;flex-direction:column;gap:8px;margin-bottom:10px;}
-.gcard-title{font-weight:700;font-size:13px;color:var(--blue);}
+
+/* Content */
+#content{padding:14px 14px 0;}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;}
+
+/* Cards */
+.gcard{background:var(--card);border-radius:16px;padding:14px;border:1px solid var(--border);display:flex;flex-direction:column;gap:8px;margin-bottom:10px;}
+.gcard-title{font-weight:700;font-size:13px;color:var(--blue);margin-bottom:2px;}
+
+/* Inputs */
 .inp{width:100%;background:#0a1525;border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);font-size:14px;transition:border-color .2s;}
 .inp::placeholder{color:var(--muted);}
-.btn{border:1px solid;border-radius:12px;padding:11px 14px;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .2s,transform .1s;width:100%;text-align:center;display:block;}
+.inp:disabled{opacity:.5;cursor:not-allowed;}
+
+/* Buttons */
+.btn{border:1px solid;border-radius:12px;padding:12px 16px;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s,transform .1s;letter-spacing:.2px;width:100%;text-align:center;}
 .btn-blue{background:linear-gradient(135deg,#1a6fd4,var(--blue));color:#fff;border-color:var(--blue);}
 .btn-gold{background:rgba(240,180,41,.12);color:var(--gold);border-color:rgba(240,180,41,.35);}
-.btn-green{background:rgba(52,211,153,.12);color:var(--green);border-color:rgba(52,211,153,.35);}
-.btn-red{background:rgba(248,113,113,.1);color:var(--red);border-color:rgba(248,113,113,.3);}
 .btn-share{background:linear-gradient(135deg,#0d3a6e,#1a6fd4);color:#fff;border-color:var(--blue);}
 .btn-ghost{background:transparent;color:var(--muted);border-color:var(--border);}
-.btn:disabled{opacity:.45;cursor:not-allowed;}
-.btn-sm{padding:7px 11px;font-size:12px;border-radius:9px;width:auto;display:inline-block;}
-.btn-row{display:flex;gap:8px;}.btn-row .btn{flex:1;}
-.pills{display:flex;gap:6px;}
-.pill{flex:1;border-radius:10px;padding:8px 5px;text-align:center;}
-.pill-val{font-size:13px;font-weight:800;}.pill-label{font-size:10px;color:var(--muted);margin-top:1px;}
-.cust-item{background:var(--card);border-radius:14px;padding:12px 13px;border:1px solid var(--border);display:flex;align-items:center;gap:9px;cursor:pointer;transition:border-color .2s;margin-bottom:8px;}
-.cust-item:hover,.cust-item:active{border-color:var(--blue);}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.btn-row{display:flex;gap:8px;}
+.btn-row .btn{width:auto;flex:1;}
+
+/* Pills */
+.pills{display:flex;gap:8px;}
+.pill{flex:1;border-radius:10px;padding:8px 6px;text-align:center;}
+.pill-val{font-size:14px;font-weight:800;}
+.pill-label{font-size:10px;color:var(--muted);margin-top:1px;}
+
+/* Customer list item */
+.cust-item{background:var(--card);border-radius:14px;padding:12px 14px;border:1px solid var(--border);display:flex;align-items:center;gap:10px;cursor:pointer;transition:border-color .2s;margin-bottom:8px;}
+.cust-item:hover{border-color:var(--blue);}
+.cust-num{width:36px;height:36px;border-radius:10px;background:rgba(59,158,255,.1);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:var(--blue);flex-shrink:0;}
+.cust-info{flex:1;min-width:0;}
+.cust-name{font-weight:700;font-size:14px;}
+.cust-meta{font-size:11px;color:var(--muted);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;}
+.cust-actions{display:flex;gap:5px;align-items:center;}
+.cust-badge{font-size:11px;color:var(--blue);background:rgba(59,158,255,.1);border-radius:8px;padding:3px 8px;white-space:nowrap;}
 .icon-btn{border:none;border-radius:8px;padding:6px 8px;cursor:pointer;font-size:13px;}
-.daily-item{border-radius:14px;padding:10px 13px;border:1px solid var(--border);display:flex;align-items:center;gap:9px;transition:all .2s;margin-bottom:6px;}
+
+/* Daily log item */
+.daily-item{border-radius:14px;padding:11px 14px;border:1px solid var(--border);display:flex;align-items:center;gap:10px;transition:all .2s;margin-bottom:6px;}
 .daily-item.has-entry{background:#091d12;border-color:rgba(52,211,153,.3);}
 .daily-item:not(.has-entry){background:var(--card);}
-.qty-ctrl{display:flex;align-items:center;gap:5px;}
-.qty-btn{width:28px;height:28px;border-radius:8px;border:none;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;}
+.daily-num{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;}
+.daily-info{flex:1;min-width:0;}
+.daily-name{font-weight:700;font-size:14px;}
+.daily-meta{font-size:11px;color:var(--muted);margin-top:1px;}
+.qty-ctrl{display:flex;align-items:center;gap:6px;}
+.qty-btn{width:30px;height:30px;border-radius:8px;border:none;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;}
 .qty-minus{background:rgba(59,158,255,.1);color:var(--blue);}
 .qty-plus{background:var(--blue);color:#fff;}
-.qty-input{width:42px;text-align:center;background:#0a1525;border:1px solid var(--border);border-radius:8px;padding:5px 3px;color:var(--text);font-size:15px;font-weight:800;transition:border-color .2s;font-family:inherit;}
-.month-item{background:var(--card);border-radius:14px;padding:11px 13px;border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:9px;transition:border-color .2s;margin-bottom:6px;}
+.qty-input{width:44px;text-align:center;background:#0a1525;border:1px solid var(--border);border-radius:8px;padding:6px 4px;color:var(--text);font-size:16px;font-weight:800;transition:border-color .2s;font-family:inherit;}
+.qty-btn:disabled,.qty-input:disabled{opacity:.4;cursor:not-allowed;}
+
+/* Monthly item */
+.month-item{background:var(--card);border-radius:14px;padding:12px 14px;border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:10px;transition:border-color .2s;margin-bottom:6px;}
 .month-item:hover{border-color:var(--gold);}
-.empty{text-align:center;color:var(--muted);font-size:13px;padding:24px 0;background:var(--card);border-radius:14px;border:1px solid var(--border);margin-bottom:8px;}
-#toast{position:fixed;top:68px;left:50%;transform:translateX(-50%);background:#0c1e35;color:var(--text);padding:9px 20px;border-radius:22px;font-size:13px;z-index:999;box-shadow:0 8px 28px rgba(0,0,0,.5);border:1px solid var(--border);white-space:nowrap;display:none;}
+
+/* Empty */
+.empty{text-align:center;color:var(--muted);font-size:13px;padding:26px 0;background:var(--card);border-radius:14px;border:1px solid var(--border);margin-bottom:8px;}
+
+/* Toast */
+#toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#0c1e35;color:var(--text);padding:10px 22px;border-radius:24px;font-size:13px;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,.5);border:1px solid var(--border);white-space:nowrap;display:none;}
+
+/* Modal */
 #modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:200;display:none;align-items:flex-end;justify-content:center;}
 #modal-overlay.open{display:flex;}
-#modal{width:100%;max-width:480px;background:var(--bg);border-radius:22px 22px 0 0;max-height:92vh;overflow:hidden;display:flex;flex-direction:column;}
-#modal-header{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;}
-#modal-body{flex:1;overflow-y:auto;padding:13px;}
-.dl-card{background:linear-gradient(160deg,#080f18,#0c1e35);border-radius:18px;padding:16px;border:1px solid var(--border);}
-.dl-card-header{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border);}
-.dl-logo{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,var(--gold),#b05500);display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0;}
-.dl-card-footer{margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:10px;color:var(--muted);}
-.badge{display:inline-block;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;}
-.badge-blue{background:rgba(59,158,255,.15);color:var(--blue);}
-.badge-gold{background:rgba(240,180,41,.15);color:var(--gold);}
-.badge-green{background:rgba(52,211,153,.15);color:var(--green);}
-.badge-red{background:rgba(248,113,113,.15);color:var(--red);}
-.cb-item{display:flex;align-items:center;gap:10px;padding:10px 13px;background:var(--card);border-radius:12px;border:1px solid var(--border);margin-bottom:7px;cursor:pointer;}
-.cb-item.selected{border-color:var(--blue);background:rgba(59,158,255,.06);}
-.cb-box{width:20px;height:20px;border-radius:6px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
-.cb-item.selected .cb-box{background:var(--blue);border-color:var(--blue);}
+#modal{width:100%;max-width:480px;background:var(--bg);border-radius:22px 22px 0 0;max-height:91vh;overflow:hidden;display:flex;flex-direction:column;}
+#modal-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;}
+#modal-body{flex:1;overflow-y:auto;padding:14px;}
+
+/* Downloadable card */
+.dl-card{background:linear-gradient(160deg,#080f18,#0c1e35);border-radius:18px;padding:18px;border:1px solid var(--border);}
+.dl-card-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+.dl-logo{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,var(--gold),#b05500);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 4px 16px rgba(240,180,41,.22);}
+.dl-card-footer{margin-top:14px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:10px;color:var(--muted);}
+
+/* Detail table */
+.detail-tbl{width:100%;}
+.detail-tbl-head{display:grid;grid-template-columns:1fr 55px 80px;padding:5px 6px;margin-bottom:2px;}
+.detail-tbl-head span{font-size:11px;color:var(--muted);font-weight:700;}
+.detail-tbl-head span:nth-child(2),.detail-tbl-head span:nth-child(3){text-align:center;}
+.detail-row{display:grid;grid-template-columns:1fr 55px 80px;align-items:center;padding:7px 6px;border-radius:6px;}
+.detail-row:nth-child(odd){background:rgba(255,255,255,.02);}
+.detail-date{font-size:13px;font-weight:500;}
+.detail-qty{text-align:center;}
+.detail-qty span{background:rgba(59,158,255,.15);color:var(--blue);border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;}
+.detail-amt{text-align:center;font-size:13px;color:var(--gold);font-weight:600;}
+.detail-total{display:grid;grid-template-columns:1fr 55px 80px;align-items:center;padding:10px 6px;margin-top:8px;border-top:1px solid var(--border);background:rgba(240,180,41,.06);border-radius:8px;}
+.detail-total .lbl{font-size:13px;color:var(--gold);font-weight:800;}
+.detail-total .tot-qty{text-align:center;font-size:13px;color:var(--blue);font-weight:800;}
+.detail-total .tot-amt{text-align:center;font-size:14px;color:var(--gold);font-weight:800;}
+
+/* Report table */
+.rep-tbl-head{display:grid;grid-template-columns:26px 1fr 54px 76px;padding:5px 4px;margin-bottom:4px;gap:4px;}
+.rep-tbl-head span{font-size:10px;color:var(--muted);font-weight:700;}
+.rep-tbl-head span:nth-child(3),.rep-tbl-head span:nth-child(4){text-align:center;}
+.rep-row{display:grid;grid-template-columns:26px 1fr 54px 76px;align-items:center;padding:8px 4px;border-radius:5px;gap:4px;}
+.rep-row:nth-child(odd){background:rgba(255,255,255,.02);}
+.rep-num{font-size:10px;color:var(--muted);font-weight:700;}
+.rep-name{font-size:13px;font-weight:700;}
+.rep-phone{font-size:10px;color:var(--muted);}
+.rep-meals{text-align:center;}
+.rep-meals span{background:rgba(59,158,255,.15);color:var(--blue);border-radius:5px;padding:2px 7px;font-size:11px;font-weight:700;}
+.rep-bill{text-align:center;font-size:13px;color:var(--gold);font-weight:700;}
+.rep-total{display:grid;grid-template-columns:26px 1fr 54px 76px;align-items:center;padding:10px 4px;margin-top:8px;border-top:1px solid var(--border);background:rgba(240,180,41,.06);border-radius:8px;gap:4px;}
+
+select{cursor:pointer;}
 </style>
 </head>
 <body>
 
-<!-- ══ SETUP SCREEN ══ -->
+<!-- Loading Screen -->
+<div id="loading-screen">
+  <div class="logo">🍱</div>
+  <div class="spin"></div>
+  <div class="msg" id="loading-msg">ডেটা লোড হচ্ছে...</div>
+</div>
+
+<!-- Setup Screen (shown if key not configured) -->
 <div id="setup-screen">
   <div class="setup-box">
-    <div class="setup-logo">🍱</div>
-    <div class="setup-title">ঘরের স্বাদ</div>
-    <div class="setup-sub">Supabase সংযোগ করুন — একবারই করতে হবে</div>
-
-    <div class="setup-step">
-      <div class="setup-step-num">ধাপ ১ — Schema রান করুন</div>
-      <div class="setup-step-text">
-        <a href="https://supabase.com/dashboard" target="_blank">supabase.com/dashboard</a> → আপনার project → বাম মেনু: <b>SQL Editor</b> → <b>New query</b> → <code>schema.sql</code> ফাইলের সব কোড পেস্ট করে <b>Run</b> করুন
-      </div>
+    <h2>⚙️ Supabase Setup</h2>
+    <p>প্রথমবার ব্যবহারের আগে Supabase URL ও Key বসান।<br>একবার বসালে সেভ হয়ে যাবে।</p>
+    <div class="setup-steps">
+      <b>ধাপগুলো:</b><br>
+      ১. <a href="https://supabase.com" target="_blank">supabase.com</a> এ free account খুলুন<br>
+      ২. New Project বানান (যেকোনো নাম দিন)<br>
+      ③. Settings → API → Project URL কপি করুন<br>
+      ④. Settings → API → anon public key কপি করুন<br>
+      ⑤. নিচে বসিয়ে "সংরক্ষণ করুন" চাপুন
     </div>
-
-    <div class="setup-step">
-      <div class="setup-step-num">ধাপ ২ — Config নিন</div>
-      <div class="setup-step-text">
-        বাম মেনু: ⚙️ <b>Project Settings → API</b> → <b>Project URL</b> ও <b>anon public key</b> কপি করুন
-      </div>
-    </div>
-
-    <label style="font-size:12px;color:#4a6a88;display:block;margin-top:10px;margin-bottom:3px;">Project URL</label>
-    <input class="s-inp" id="s-url" placeholder="https://xxxx.supabase.co">
-    <label style="font-size:12px;color:#4a6a88;display:block;margin-top:8px;margin-bottom:3px;">Anon Public Key</label>
-    <input class="s-inp" id="s-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
-
-    <button class="setup-btn" onclick="saveConfig()">✅ সংযোগ করুন</button>
-    <div class="setup-err" id="setup-err"></div>
-    <div style="text-align:center;margin-top:14px;font-size:12px;color:#4a6a88;">
-      আগে করা থাকলে → <button onclick="loadConfig()" style="background:none;border:none;color:#3b9eff;cursor:pointer;font-size:12px;font-family:inherit;text-decoration:underline;">এখানে চাপুন</button>
-    </div>
+    <input class="setup-inp" id="setup-url" placeholder="https://xxxxxxxx.supabase.co" type="url">
+    <input class="setup-inp" id="setup-key" placeholder="eyJhbGciOi... (anon key)" type="text">
+    <button class="btn btn-blue" onclick="saveSetup()">✅ সংরক্ষণ করুন ও শুরু করুন</button>
   </div>
 </div>
 
-<!-- ══ MAIN APP ══ -->
-<div id="app" style="display:none;">
-<div id="header">
-  <div class="logo-box">🍱</div>
-  <div><div class="htitle">ঘরের স্বাদ <span id="sync-dot" class="syncing"></span></div><div class="hsub" id="sync-label">লোড হচ্ছে...</div></div>
+<!-- Readonly Banner -->
+<div id="readonly-banner" class="show">
+  👁️ শুধু দেখার মোড — ডেটা লাইভ আপডেট হচ্ছে
+</div>
+
+<!-- Header -->
+<div id="header" style="display:none;">
+  <div class="logo">🍱</div>
+  <div>
+    <div class="title">ঘরের স্বাদ</div>
+    <div class="sub" style="display:flex;align-items:center;gap:5px;">
+      <div id="sync-dot"></div>
+      <span id="sync-label">সংযুক্ত</span>
+    </div>
+  </div>
+  <div id="admin-badge">🔑 অ্যাডমিন</div>
   <div class="month-badge" id="header-month"></div>
 </div>
+
+<!-- Toast -->
 <div id="toast"></div>
 
-<div id="content">
+<!-- Content -->
+<div id="content" style="display:none;">
 
-  <!-- CUSTOMERS -->
+  <!-- CUSTOMERS TAB -->
   <div id="tab-customers" class="tab-pane">
-    <div class="gcard">
-      <div class="gcard-title" id="cust-form-title">➕ নতুন কাস্টমার</div>
-      <input class="inp" id="f-name" placeholder="নাম *">
+    <div class="gcard" id="cust-form-card">
+      <div class="gcard-title" id="cust-form-title">➕ নতুন কাস্টমার যোগ করুন</div>
+      <input class="inp" id="f-name" placeholder="নাম *" type="text">
       <input class="inp" id="f-phone" placeholder="মোবাইল নম্বর" type="tel">
       <input class="inp" id="f-price" placeholder="প্রতি খাবারের দাম (৳)" type="number" min="0">
       <div class="btn-row">
@@ -169,803 +276,862 @@ button:active{opacity:.75;transform:scale(.96);}
         <button class="btn btn-ghost" id="cust-cancel-btn" onclick="cancelEdit()" style="display:none">বাতিল</button>
       </div>
     </div>
-    <input class="inp" id="cust-search" placeholder="🔍 খুঁজুন..." oninput="renderCustomers()" style="margin-bottom:10px;">
+    <input class="inp" id="cust-search" placeholder="🔍 খুঁজুন..." type="text" oninput="renderCustomers()" style="margin-bottom:10px;">
     <div id="cust-list"></div>
   </div>
 
-  <!-- DAILY -->
+  <!-- DAILY TAB -->
   <div id="tab-daily" class="tab-pane active">
     <div class="gcard">
-      <label style="font-size:12px;color:var(--muted);font-weight:600;">📅 তারিখ</label>
+      <label style="font-size:12px;color:var(--muted);font-weight:600;">📅 তারিখ বেছে নিন</label>
       <input class="inp" id="daily-date" type="date" onchange="renderDaily()">
-      <div id="today-badge" style="font-size:11px;color:var(--green);font-weight:600;text-align:center;display:none;">✓ আজকের লগ</div>
-      <div class="pills">
-        <div class="pill" style="background:rgba(59,158,255,.1);border:1px solid rgba(59,158,255,.1);"><div class="pill-val" style="color:var(--blue);" id="d-meals">০টি</div><div class="pill-label">মোট খাবার</div></div>
-        <div class="pill" style="background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.1);"><div class="pill-val" style="color:var(--gold);" id="d-bill">৳০</div><div class="pill-label">মোট বিল</div></div>
+      <div id="daily-today-badge" style="font-size:11px;color:var(--green);font-weight:600;text-align:center;display:none;">✓ আজকের লগ</div>
+      <div class="pills" id="daily-summary">
+        <div class="pill" style="background:rgba(59,158,255,.1);border:1px solid rgba(59,158,255,.15);">
+          <div class="pill-val" style="color:var(--blue);" id="daily-total-meals">0টি</div>
+          <div class="pill-label">মোট খাবার</div>
+        </div>
+        <div class="pill" style="background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.15);">
+          <div class="pill-val" style="color:var(--gold);" id="daily-total-bill">৳০</div>
+          <div class="pill-label">মোট বিল</div>
+        </div>
       </div>
     </div>
     <div id="daily-list"></div>
   </div>
 
-  <!-- MONTHLY -->
+  <!-- MONTHLY TAB -->
   <div id="tab-monthly" class="tab-pane">
     <div class="gcard">
-      <select class="inp" id="monthly-sel" onchange="renderMonthly()"></select>
+      <select class="inp" id="monthly-select" onchange="renderMonthly()"></select>
       <div class="pills">
-        <div class="pill" style="background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.1);"><div class="pill-val" style="color:var(--green);" id="m-custs">০জন</div><div class="pill-label">কাস্টমার</div></div>
-        <div class="pill" style="background:rgba(59,158,255,.1);border:1px solid rgba(59,158,255,.1);"><div class="pill-val" style="color:var(--blue);" id="m-meals">০টি</div><div class="pill-label">খাবার</div></div>
-        <div class="pill" style="background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.1);"><div class="pill-val" style="color:var(--gold);" id="m-bill">৳০</div><div class="pill-label">বিল</div></div>
-        <div class="pill" style="background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.1);"><div class="pill-val" style="color:var(--red);" id="m-due">৳০</div><div class="pill-label">বাকি</div></div>
+        <div class="pill" style="background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.15);">
+          <div class="pill-val" style="color:var(--green);" id="m-total-custs">০জন</div>
+          <div class="pill-label">কাস্টমার</div>
+        </div>
+        <div class="pill" style="background:rgba(59,158,255,.1);border:1px solid rgba(59,158,255,.15);">
+          <div class="pill-val" style="color:var(--blue);" id="m-total-meals">০টি</div>
+          <div class="pill-label">মোট খাবার</div>
+        </div>
+        <div class="pill" style="background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.15);">
+          <div class="pill-val" style="color:var(--gold);" id="m-total-bill">৳০</div>
+          <div class="pill-label">মোট বিল</div>
+        </div>
       </div>
     </div>
     <div id="monthly-list"></div>
   </div>
 
-  <!-- EXPORT -->
+  <!-- REPORT TAB -->
   <div id="tab-report" class="tab-pane">
     <div class="gcard">
-      <div class="gcard-title">📅 সময়সীমা</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:3px;">শুরু</label><input class="inp" id="exp-from" type="date"></div>
-        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:3px;">শেষ</label><input class="inp" id="exp-to" type="date"></div>
+      <select class="inp" id="report-select" onchange="renderReport()"></select>
+    </div>
+    <div id="report-card" class="dl-card">
+      <div class="dl-card-header">
+        <div class="dl-logo">🍱</div>
+        <div style="flex:1">
+          <div style="font-weight:800;font-size:17px;">ঘরের স্বাদ</div>
+          <div style="font-size:12px;color:var(--gold);margin-top:1px;" id="rep-month-label"></div>
+        </div>
       </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <button class="btn btn-ghost btn-sm" onclick="setRange('this-month')">এই মাস</button>
-        <button class="btn btn-ghost btn-sm" onclick="setRange('last-month')">গত মাস</button>
-        <button class="btn btn-ghost btn-sm" onclick="setRange('3months')">৩ মাস</button>
-        <button class="btn btn-ghost btn-sm" onclick="setRange('all')">সব</button>
+      <div class="pills" style="margin-bottom:16px;">
+        <div class="pill" style="background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.15);">
+          <div class="pill-val" style="color:var(--green);" id="rep-custs">০জন</div>
+          <div class="pill-label">কাস্টমার</div>
+        </div>
+        <div class="pill" style="background:rgba(59,158,255,.1);border:1px solid rgba(59,158,255,.15);">
+          <div class="pill-val" style="color:var(--blue);" id="rep-meals">০টি</div>
+          <div class="pill-label">মোট খাবার</div>
+        </div>
+        <div class="pill" style="background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.15);">
+          <div class="pill-val" style="color:var(--gold);" id="rep-bill">৳০</div>
+          <div class="pill-label">মোট বিল</div>
+        </div>
+      </div>
+      <div class="rep-tbl-head">
+        <span>#</span><span>নাম</span><span style="text-align:center">খাবার</span><span style="text-align:center">বিল</span>
+      </div>
+      <div id="rep-rows"></div>
+      <div id="rep-total-row" class="rep-total" style="display:none;">
+        <div></div>
+        <div style="font-size:13px;color:var(--gold);font-weight:800;">সর্বমোট</div>
+        <div style="text-align:center;font-size:13px;color:var(--blue);font-weight:800;" id="rep-tot-meals"></div>
+        <div style="text-align:center;font-size:14px;color:var(--gold);font-weight:800;" id="rep-tot-bill"></div>
+      </div>
+      <div class="dl-card-footer">
+        <span>ঘরের স্বাদ</span>
+        <span id="rep-date"></span>
       </div>
     </div>
-    <div class="gcard">
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <div class="gcard-title">👥 কাস্টমার বেছে নিন</div>
-        <div style="display:flex;gap:6px;"><button class="btn btn-ghost btn-sm" onclick="selectAll()">সব</button><button class="btn btn-ghost btn-sm" onclick="clearAll()">বাদ</button></div>
-      </div>
-      <div id="exp-cust-list"></div>
-    </div>
-    <div class="gcard">
-      <div class="gcard-title">⬇️ ডাউনলোড</div>
-      <button class="btn btn-red" onclick="exportPDF()">📄 PDF ডাউনলোড</button>
-      <button class="btn btn-green" onclick="exportCSV()">📊 CSV / Google Sheets</button>
-      <button class="btn btn-share" onclick="exportTextShare()">📤 টেক্সট শেয়ার</button>
-      <div style="font-size:11px;color:var(--muted);text-align:center;">CSV → Google Drive → Sheets দিয়ে খুলুন</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+      <button class="btn btn-share" onclick="shareReport()">📤 শেয়ার করুন (WhatsApp / SMS)</button>
+      <button class="btn btn-gold" id="dl-report-btn" onclick="downloadReport()">📥 রিপোর্ট ছবি ডাউনলোড করুন</button>
+      <div style="font-size:11px;color:var(--muted);text-align:center;">💡 ছবিটি গ্যালারিতে সেভ হবে — যেকাউকে পাঠান</div>
     </div>
   </div>
+</div>
 
-</div><!-- end content -->
-
-<nav id="nav">
-  <button class="nav-btn active" onclick="switchTab('daily')" id="nav-daily"><div class="nav-bar"></div><div class="nav-icon">📋</div><div class="nav-label">ডেইলি</div></button>
-  <button class="nav-btn" onclick="switchTab('customers')" id="nav-customers"><div class="nav-bar"></div><div class="nav-icon">👥</div><div class="nav-label">কাস্টমার</div></button>
-  <button class="nav-btn" onclick="switchTab('monthly')" id="nav-monthly"><div class="nav-bar"></div><div class="nav-icon">📅</div><div class="nav-label">মাসিক</div></button>
-  <button class="nav-btn" onclick="switchTab('report')" id="nav-report"><div class="nav-bar"></div><div class="nav-icon">📤</div><div class="nav-label">এক্সপোর্ট</div></button>
+<!-- Bottom Nav -->
+<nav id="nav" style="display:none;">
+  <button class="nav-btn" onclick="switchTab('daily')" id="nav-daily">
+    <div class="nav-bar"></div>
+    <div class="nav-icon">📋</div>
+    <div class="nav-label">ডেইলি লগ</div>
+  </button>
+  <button class="nav-btn" onclick="switchTab('customers')" id="nav-customers">
+    <div class="nav-bar"></div>
+    <div class="nav-icon">👥</div>
+    <div class="nav-label">কাস্টমার</div>
+  </button>
+  <button class="nav-btn" onclick="switchTab('monthly')" id="nav-monthly">
+    <div class="nav-bar"></div>
+    <div class="nav-icon">📅</div>
+    <div class="nav-label">মাসিক</div>
+  </button>
+  <button class="nav-btn" onclick="switchTab('report')" id="nav-report">
+    <div class="nav-bar"></div>
+    <div class="nav-icon">📤</div>
+    <div class="nav-label">রিপোর্ট</div>
+  </button>
 </nav>
-</div><!-- end app -->
 
-<!-- CUSTOMER DETAIL MODAL -->
+<!-- Detail Modal -->
 <div id="modal-overlay" onclick="closeModalOutside(event)">
   <div id="modal" class="slide">
     <div id="modal-header">
-      <div style="flex:1;min-width:0;">
-        <div id="modal-cust-name" style="font-weight:800;font-size:15px;"></div>
-        <div id="modal-cust-phone" style="font-size:12px;color:var(--muted);"></div>
+      <div style="flex:1;">
+        <div id="modal-cust-name" style="font-weight:800;font-size:16px;"></div>
+        <div id="modal-cust-phone" style="font-size:12px;color:var(--muted);margin-top:1px;"></div>
       </div>
-      <button class="btn btn-blue btn-sm" id="mdl-tab-month-btn" onclick="setModalTab('month')">মাস</button>
-      <button class="btn btn-ghost btn-sm" id="mdl-tab-all-btn" onclick="setModalTab('all')">সব মাস</button>
-      <button class="btn btn-ghost btn-sm" id="mdl-tab-pay-btn" onclick="setModalTab('pay')">💳 জমা</button>
-      <button onclick="closeModal()" style="background:var(--card2);border:none;border-radius:8px;width:30px;height:30px;color:var(--muted);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
+      <select class="inp" id="modal-month-select" style="width:auto;font-size:12px;padding:7px 10px;" onchange="renderModalDetail()"></select>
+      <button onclick="closeModal()" style="background:var(--card2);border:none;border-radius:8px;width:32px;height:32px;color:var(--muted);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;margin-left:8px;">✕</button>
     </div>
     <div id="modal-body">
-
-      <!-- Month view -->
-      <div id="mdl-month-view">
-        <select class="inp" id="modal-month-sel" onchange="renderModalMonth()" style="margin-bottom:10px;"></select>
-        <div id="modal-dl-card" class="dl-card">
-          <div class="dl-card-header">
-            <div class="dl-logo">🍱</div>
-            <div style="flex:1;"><div id="mdl-name" style="font-weight:800;font-size:15px;"></div><div id="mdl-phone" style="font-size:11px;color:var(--muted);margin-top:1px;"></div></div>
-            <div style="background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.28);border-radius:10px;padding:6px 10px;text-align:center;">
-              <div id="mdl-month" style="font-size:11px;color:var(--gold);font-weight:700;"></div>
-              <div style="font-size:9px;color:var(--muted);">ঘরের স্বাদ</div>
-            </div>
+      <div id="modal-dl-card" class="dl-card">
+        <div class="dl-card-header">
+          <div class="dl-logo">🍱</div>
+          <div style="flex:1;">
+            <div id="mdl-name" style="font-weight:800;font-size:16px;"></div>
+            <div id="mdl-phone" style="font-size:12px;color:var(--muted);margin-top:1px;"></div>
           </div>
-          <div class="pills" style="margin-bottom:14px;" id="mdl-pills"></div>
-          <div id="mdl-table"></div>
-          <div class="dl-card-footer"><span>ঘরের স্বাদ</span><span id="mdl-footer-date"></span></div>
+          <div style="background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.28);border-radius:10px;padding:7px 11px;text-align:center;">
+            <div id="mdl-month" style="font-size:11px;color:var(--gold);font-weight:700;"></div>
+            <div style="font-size:10px;color:var(--muted);margin-top:1px;">ঘরের স্বাদ</div>
+          </div>
         </div>
-        <div style="display:flex;gap:7px;margin-top:10px;">
-          <button class="btn btn-gold btn-sm" id="btn-img" onclick="downloadDetailImg()" style="flex:1;">📷 ছবি</button>
-          <button class="btn btn-red btn-sm" onclick="downloadSinglePDF()" style="flex:1;">📄 PDF</button>
-          <button class="btn btn-green btn-sm" onclick="downloadSingleCSV()" style="flex:1;">📊 CSV</button>
-        </div>
-      </div>
-
-      <!-- All months view -->
-      <div id="mdl-all-view" style="display:none;">
-        <div id="mdl-all-content"></div>
-        <div style="display:flex;gap:8px;margin-top:10px;">
-          <button class="btn btn-red" onclick="downloadAllPDF()" style="flex:1;">📄 সব মাস PDF</button>
-          <button class="btn btn-green" onclick="downloadAllCSV()" style="flex:1;">📊 সব মাস CSV</button>
+        <div class="pills" style="margin-bottom:16px;" id="mdl-pills"></div>
+        <div id="mdl-table"></div>
+        <div class="dl-card-footer">
+          <span>ঘরের স্বাদ • খাবার হিসাব</span>
+          <span id="mdl-footer-date"></span>
         </div>
       </div>
-
-      <!-- Payment view -->
-      <div id="mdl-pay-view" style="display:none;">
-        <div class="gcard" style="margin-bottom:10px;">
-          <div class="gcard-title">💳 জমা যোগ করুন</div>
-          <select class="inp" id="pay-month-sel"></select>
-          <input class="inp" id="pay-amount" placeholder="টাকার পরিমাণ (৳)" type="number" min="0">
-          <button class="btn btn-blue" onclick="addPayment()">জমা সেভ করুন</button>
-        </div>
-        <div id="pay-history"></div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;padding-bottom:20px;">
+        <button class="btn btn-gold" id="dl-detail-btn" onclick="downloadDetail()">📥 ছবি হিসেবে ডাউনলোড করুন</button>
+        <div style="font-size:11px;color:var(--muted);text-align:center;">ছবিটি সেভ হবে — যেকাউকে পাঠাতে পারবেন</div>
       </div>
-
     </div>
   </div>
 </div>
 
 <script>
-// ════════════════════════════════════════
-// STATE
-// ════════════════════════════════════════
-let sb = null;
-let customers = [], logs = {}, payments = {};
-let editId = null, modalCustId = null, modalTab = 'month', activeTab = 'daily';
-let selectedCusts = new Set(), qtyTimer = null;
-const CFG_KEY = 'gs_sb_cfg';
+// ══════════════════════════════════════════════════════════════════
+// CONFIG & STATE
+// ══════════════════════════════════════════════════════════════════
+let supabaseUrl = SUPABASE_URL;
+let supabaseKey = SUPABASE_KEY;
+let isAdmin = false;
+let isReadOnly = true;
 
-// ════════════════════════════════════════
-// SUPABASE SETUP
-// ════════════════════════════════════════
-function saveConfig() {
-  const url = document.getElementById('s-url').value.trim();
-  const key = document.getElementById('s-key').value.trim();
-  if (!url || !key) { showErr('URL ও Key দিন'); return; }
-  localStorage.setItem(CFG_KEY, JSON.stringify({ url, key }));
-  initSB(url, key);
-}
-function loadConfig() {
-  const s = localStorage.getItem(CFG_KEY);
-  if (s) { const c = JSON.parse(s); initSB(c.url, c.key); }
-  else showErr('কোনো config পাওয়া যায়নি');
-}
-function showErr(msg) { const e = el('setup-err'); e.textContent = msg; e.style.display = 'block'; }
+let customers = [];
+let logs = {}; // { 'YYYY-MM': { custId: { 'YYYY-MM-DD': qty } } }
+let editId = null;
+let modalCustId = null;
+let activeTab = 'daily';
+let realtimeChannel = null;
 
-function initSB(url, key) {
+// ══════════════════════════════════════════════════════════════════
+// SUPABASE CLIENT (lightweight fetch wrapper)
+// ══════════════════════════════════════════════════════════════════
+function sbHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'apikey': supabaseKey,
+    'Authorization': `Bearer ${supabaseKey}`,
+    'Prefer': 'return=representation'
+  };
+}
+
+async function sbSelect(table, query = '') {
+  const r = await fetch(`${supabaseUrl}/rest/v1/${table}?${query}`, {
+    headers: sbHeaders()
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+async function sbInsert(table, data) {
+  const r = await fetch(`${supabaseUrl}/rest/v1/${table}`, {
+    method: 'POST',
+    headers: sbHeaders(),
+    body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+async function sbUpdate(table, data, query) {
+  const r = await fetch(`${supabaseUrl}/rest/v1/${table}?${query}`, {
+    method: 'PATCH',
+    headers: sbHeaders(),
+    body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+async function sbDelete(table, query) {
+  const r = await fetch(`${supabaseUrl}/rest/v1/${table}?${query}`, {
+    method: 'DELETE',
+    headers: sbHeaders()
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.ok;
+}
+
+async function sbUpsert(table, data, onConflict) {
+  const r = await fetch(`${supabaseUrl}/rest/v1/${table}?on_conflict=${onConflict}`, {
+    method: 'POST',
+    headers: { ...sbHeaders(), 'Prefer': 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SETUP
+// ══════════════════════════════════════════════════════════════════
+function saveSetup() {
+  const url = document.getElementById('setup-url').value.trim();
+  const key = document.getElementById('setup-key').value.trim();
+  if (!url || !key) { alert('দুটো field পূরণ করুন!'); return; }
+  localStorage.setItem('gs_supabase_url', url);
+  localStorage.setItem('gs_supabase_key', key);
+  supabaseUrl = url;
+  supabaseKey = key;
+  document.getElementById('setup-screen').classList.remove('show');
+  startApp();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// DATABASE SETUP (create tables if not exist via RPC or check)
+// ══════════════════════════════════════════════════════════════════
+async function ensureTables() {
+  // We just try to query; if tables missing, show helpful error
   try {
-    sb = supabase.createClient(url, key);
-    el('setup-screen').style.display = 'none';
-    el('app').style.display = 'block';
-    startApp();
-  } catch(e) { showErr('সংযোগ ব্যর্থ — URL/Key যাচাই করুন'); }
-}
-
-window.addEventListener('load', () => {
-  const s = localStorage.getItem(CFG_KEY);
-  if (s) { const c = JSON.parse(s); initSB(c.url, c.key); }
-});
-
-// ════════════════════════════════════════
-// DATA LOADING
-// ════════════════════════════════════════
-async function loadAll() {
-  setSyncState('syncing', 'লোড হচ্ছে...');
-  try {
-    const [cr, lr, pr] = await Promise.all([
-      sb.from('customers').select('*').order('name'),
-      sb.from('logs').select('*'),
-      sb.from('payments').select('*')
-    ]);
-    if (cr.error) throw cr.error;
-
-    customers = cr.data || [];
-
-    logs = {};
-    (lr.data || []).forEach(r => {
-      const mk = r.date.slice(0, 7);
-      if (!logs[mk]) logs[mk] = {};
-      if (!logs[mk][r.customer_id]) logs[mk][r.customer_id] = {};
-      logs[mk][r.customer_id][r.date] = r.qty;
-    });
-
-    payments = {};
-    (pr.data || []).forEach(r => {
-      if (!payments[r.customer_id]) payments[r.customer_id] = {};
-      payments[r.customer_id][r.month] = Number(r.amount);
-    });
-
-    setSyncState('online', 'সংযুক্ত ✓');
-    refreshCurrentTab();
-    renderExportCustList();
-  } catch (e) {
-    setSyncState('err', 'সংযোগ ত্রুটি');
-    console.error(e);
+    await sbSelect('gs_customers', 'select=id&limit=1');
+  } catch(e) {
+    if (e.message.includes('relation') || e.message.includes('does not exist') || e.message.includes('42P01')) {
+      throw new Error('TABLES_MISSING');
+    }
+    throw e;
   }
 }
 
-function startApp() {
-  loadAll();
-  // Real-time subscriptions
-  sb.channel('db-changes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, () => loadAll())
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'logs' }, () => loadAll())
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => loadAll())
-    .subscribe(status => {
-      if (status === 'SUBSCRIBED') setSyncState('online', 'সংযুক্ত ✓');
-    });
-  init();
+// ══════════════════════════════════════════════════════════════════
+// LOAD DATA
+// ══════════════════════════════════════════════════════════════════
+async function loadData() {
+  setSyncState('syncing', 'লোড হচ্ছে...');
+  const [custs, logRows] = await Promise.all([
+    sbSelect('gs_customers', 'select=*&order=created_at.asc'),
+    sbSelect('gs_logs', 'select=*')
+  ]);
+  customers = custs;
+  logs = {};
+  for (const row of logRows) {
+    if (!logs[row.month_key]) logs[row.month_key] = {};
+    if (!logs[row.month_key][row.customer_id]) logs[row.month_key][row.customer_id] = {};
+    logs[row.month_key][row.customer_id][row.log_date] = row.qty;
+  }
+  setSyncState('ok', 'লাইভ');
 }
 
-// DB writes
-async function dbUpsertCustomer(c) {
-  const { error } = await sb.from('customers').upsert(c);
-  if (error) { showToast('সেভ ব্যর্থ'); console.error(error); }
-}
-async function dbDeleteCustomer(id) {
-  await sb.from('customers').delete().eq('id', id);
-  await sb.from('logs').delete().eq('customer_id', id);
-  await sb.from('payments').delete().eq('customer_id', id);
-}
-async function dbUpsertLog(cId, date, qty) {
-  if (qty <= 0) { await sb.from('logs').delete().eq('customer_id', cId).eq('date', date); }
-  else { await sb.from('logs').upsert({ customer_id: cId, date, qty }); }
-}
-async function dbUpsertPayment(cId, month, amount) {
-  await sb.from('payments').upsert({ customer_id: cId, month, amount: Number(amount) });
+// ══════════════════════════════════════════════════════════════════
+// REALTIME (auto-refresh on changes)
+// ══════════════════════════════════════════════════════════════════
+function setupRealtime() {
+  // Supabase realtime via SSE (simplified polling fallback)
+  // Full realtime requires the supabase-js client; we use polling
+  setInterval(async () => {
+    try {
+      await loadData();
+      refreshCurrentTab();
+    } catch(e) {
+      setSyncState('err', 'সংযোগ নেই');
+    }
+  }, 8000); // refresh every 8 seconds
 }
 
-function setSyncState(s, l) {
-  const d = el('sync-dot');
-  d.className = s === 'online' ? '' : s;
-  el('sync-label').textContent = l;
+function refreshCurrentTab() {
+  if (activeTab === 'customers') renderCustomers();
+  else if (activeTab === 'daily') renderDaily();
+  else if (activeTab === 'monthly') renderMonthly();
+  else if (activeTab === 'report') renderReport();
 }
 
-// ════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
+// SYNC STATE
+// ══════════════════════════════════════════════════════════════════
+function setSyncState(state, label) {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  dot.className = state;
+  if (lbl) lbl.textContent = label;
+}
+
+// ══════════════════════════════════════════════════════════════════
 // HELPERS
-// ════════════════════════════════════════
-const el = id => document.getElementById(id);
-const v  = id => el(id).value.trim();
+// ══════════════════════════════════════════════════════════════════
 function todayStr() { return new Date().toISOString().slice(0, 10); }
 function monthKey(d) { return d.slice(0, 7); }
 function uid() { return Math.random().toString(36).slice(2, 9); }
-const BN = ["জানুয়ারি","ফেব্রুয়ারি","মার্চ","এপ্রিল","মে","জুন","জুলাই","আগস্ট","সেপ্টেম্বর","অক্টোবর","নভেম্বর","ডিসেম্বর"];
-function monthLabel(mk) { const [y,m] = mk.split('-'); return `${BN[+m-1]} ${y}`; }
-function fmtDate(d) { const [,m,day] = d.split('-'); return `${+day} ${BN[+m-1]}`; }
+const BN_MONTHS = ["জানুয়ারি","ফেব্রুয়ারি","মার্চ","এপ্রিল","মে","জুন","জুলাই","আগস্ট","সেপ্টেম্বর","অক্টোবর","নভেম্বর","ডিসেম্বর"];
+function monthLabel(mk) { const [y,m] = mk.split('-'); return `${BN_MONTHS[+m-1]} ${y}`; }
+function fmtDate(d) { const [,m,day] = d.split('-'); return `${+day} ${BN_MONTHS[+m-1]}`; }
+function allMonths() {
+  const set = new Set([monthKey(todayStr()), ...Object.keys(logs)]);
+  return [...set].sort().reverse();
+}
+function getQty(custId, date) {
+  const mk = monthKey(date);
+  return ((logs[mk] || {})[custId] || {})[date] || 0;
+}
+function custMonthDetail(custId, mk) {
+  const c = customers.find(x => x.id === custId);
+  if (!c) return { entries: [], meals: 0, bill: 0 };
+  const dl = (logs[mk] || {})[custId] || {};
+  const entries = Object.entries(dl)
+    .filter(([,v]) => v > 0)
+    .sort(([a],[b]) => a.localeCompare(b))
+    .map(([date,qty]) => ({ date, qty: Number(qty), amount: Number(qty) * (Number(c.price) || 0) }));
+  const meals = entries.reduce((s,e) => s + e.qty, 0);
+  return { entries, meals, bill: meals * (Number(c.price) || 0) };
+}
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-function allMonths() {
-  const s = new Set([monthKey(todayStr()), ...Object.keys(logs)]);
-  return [...s].sort().reverse();
-}
-function getQty(cId, date) { return ((logs[monthKey(date)] || {})[cId] || {})[date] || 0; }
-function getPaid(cId, mk) { return (payments[cId] || {})[mk] || 0; }
-
-function custMonthDetail(cId, mk) {
-  const c = customers.find(x => x.id === cId);
-  if (!c) return { entries: [], meals: 0, bill: 0, paid: 0, due: 0 };
-  const dl = (logs[mk] || {})[cId] || {};
-  const entries = Object.entries(dl)
-    .filter(([, v]) => v > 0)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, qty]) => ({ date, qty: Number(qty), amount: Number(qty) * (Number(c.price) || 0) }));
-  const meals = entries.reduce((s, e) => s + e.qty, 0);
-  const bill  = meals * (Number(c.price) || 0);
-  const paid  = getPaid(cId, mk);
-  return { entries, meals, bill, paid, due: bill - paid };
-}
-function custAllMonths(cId) {
-  return allMonths()
-    .map(mk => ({ mk, ...custMonthDetail(cId, mk) }))
-    .filter(m => m.meals > 0);
-}
-
-function dateInRange(date) {
-  const from = el('exp-from').value, to = el('exp-to').value;
-  return !(from && date < from) && !(to && date > to);
-}
-function monthInRange(mk) {
-  const from = el('exp-from').value, to = el('exp-to').value;
-  return !(from && mk + '-31' < from) && !(to && mk + '-01' > to);
-}
-
-// ════════════════════════════════════════
-// INIT & TABS
-// ════════════════════════════════════════
-function init() {
-  el('daily-date').value = todayStr();
-  el('header-month').textContent = monthLabel(monthKey(todayStr()));
-  const t = todayStr();
-  el('exp-from').value = t.slice(0, 8) + '01';
-  el('exp-to').value = t;
-  renderDaily();
-}
-
-let toastT;
+// ══════════════════════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════════════════════
+let toastTimer;
 function showToast(msg) {
-  const t = el('toast'); t.textContent = msg; t.style.display = 'block'; t.className = 'fadein';
-  clearTimeout(toastT); toastT = setTimeout(() => { t.style.display = 'none'; }, 2600);
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display = 'block'; t.className = 'fadein';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.style.display = 'none'; }, 2600);
 }
 
+// ══════════════════════════════════════════════════════════════════
+// TAB SWITCHING
+// ══════════════════════════════════════════════════════════════════
 function switchTab(tab) {
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  el('tab-' + tab).classList.add('active');
-  el('nav-' + tab).classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('nav-' + tab).classList.add('active');
   activeTab = tab;
   if (tab === 'customers') renderCustomers();
-  if (tab === 'daily')     renderDaily();
-  if (tab === 'monthly')   renderMonthly();
-  if (tab === 'report')    renderExportCustList();
+  if (tab === 'daily') renderDaily();
+  if (tab === 'monthly') renderMonthly();
+  if (tab === 'report') renderReport();
 }
-function refreshCurrentTab() { switchTab(activeTab); }
 
-// ════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
 // CUSTOMERS
-// ════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
 function renderCustomers() {
-  const q = (el('cust-search').value || '').toLowerCase();
-  const filtered = customers.filter(c => c.name.toLowerCase().includes(q) || (c.phone || '').includes(q));
-  el('cust-search').placeholder = `🔍 খুঁজুন... (${customers.length} জন)`;
-  const list = el('cust-list');
-  if (!filtered.length) { list.innerHTML = '<div class="empty">কোনো কাস্টমার নেই</div>'; return; }
+  // Hide form in readonly mode
+  document.getElementById('cust-form-card').style.display = isReadOnly ? 'none' : '';
+
+  const search = (document.getElementById('cust-search').value || '').toLowerCase();
+  const filtered = customers.filter(c =>
+    c.name.toLowerCase().includes(search) || (c.phone || '').includes(search)
+  );
+  const list = document.getElementById('cust-list');
+  if (filtered.length === 0) { list.innerHTML = '<div class="empty">কোনো কাস্টমার নেই</div>'; return; }
   list.innerHTML = filtered.map((c, i) => `
     <div class="cust-item anim" onclick="openModal('${c.id}')">
-      <div style="width:34px;height:34px;border-radius:9px;background:rgba(59,158,255,.1);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:var(--blue);flex-shrink:0;">${customers.indexOf(c)+1}</div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-weight:700;font-size:14px;">${esc(c.name)}</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px;display:flex;gap:8px;">
+      <div class="cust-num">${customers.indexOf(c) + 1}</div>
+      <div class="cust-info">
+        <div class="cust-name">${esc(c.name)}</div>
+        <div class="cust-meta">
           ${c.phone ? `<span>📞 ${esc(c.phone)}</span>` : ''}
           ${c.price ? `<span style="color:var(--gold)">৳${c.price}/খাবার</span>` : ''}
         </div>
       </div>
-      <div style="display:flex;gap:5px;align-items:center;">
-        <span style="font-size:10px;color:var(--blue);background:rgba(59,158,255,.1);border-radius:7px;padding:3px 7px;white-space:nowrap;">বিস্তারিত →</span>
-        <button class="icon-btn" style="background:rgba(59,158,255,.1);color:var(--blue);" onclick="event.stopPropagation();startEdit('${c.id}')">✏️</button>
-        <button class="icon-btn" style="background:rgba(248,113,113,.1);color:var(--red);" onclick="event.stopPropagation();deleteCust('${c.id}')">🗑</button>
+      <div class="cust-actions">
+        <span class="cust-badge">বিস্তারিত →</span>
+        ${!isReadOnly ? `
+          <button class="icon-btn" style="background:rgba(59,158,255,.1);color:var(--blue);" onclick="event.stopPropagation();startEdit('${c.id}')">✏️</button>
+          <button class="icon-btn" style="background:rgba(248,113,113,.1);color:var(--red);" onclick="event.stopPropagation();deleteCust('${c.id}')">🗑</button>
+        ` : ''}
       </div>
-    </div>`).join('');
+    </div>
+  `).join('');
+  document.getElementById('cust-search').placeholder = `🔍 খুঁজুন... (${customers.length} জন)`;
 }
 
 async function submitCustomer() {
-  const name = v('f-name'), phone = v('f-phone'), price = v('f-price');
+  if (isReadOnly) { showToast('শুধু দেখার মোড'); return; }
+  const name = document.getElementById('f-name').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+  const price = document.getElementById('f-price').value.trim();
   if (!name) { showToast('নাম দিন!'); return; }
-  const cust = editId
-    ? { ...customers.find(c => c.id === editId), name, phone, price }
-    : { id: uid(), name, phone, price };
-  await dbUpsertCustomer(cust);
-  if (editId) { showToast('আপডেট ✓'); cancelEdit(); }
-  else { showToast('কাস্টমার যোগ হয়েছে ✓'); }
-  el('f-name').value = ''; el('f-phone').value = ''; el('f-price').value = '';
+
+  const btn = document.getElementById('cust-submit-btn');
+  btn.disabled = true; btn.textContent = '⏳...';
+
+  try {
+    setSyncState('syncing', 'সেভ হচ্ছে...');
+    if (editId) {
+      await sbUpdate('gs_customers', { name, phone, price: price || null }, `id=eq.${editId}`);
+      customers = customers.map(c => c.id === editId ? { ...c, name, phone, price } : c);
+      showToast('আপডেট হয়েছে ✓');
+      cancelEdit();
+    } else {
+      const newId = uid();
+      const [row] = await sbInsert('gs_customers', { id: newId, name, phone, price: price || null });
+      customers.push(row || { id: newId, name, phone, price });
+      showToast('কাস্টমার যোগ হয়েছে ✓');
+    }
+    ['f-name','f-phone','f-price'].forEach(id => document.getElementById(id).value = '');
+    setSyncState('ok', 'লাইভ');
+    renderCustomers();
+  } catch(e) {
+    showToast('❌ সেভ হয়নি');
+    setSyncState('err', 'সমস্যা');
+  }
+  btn.disabled = false;
+  btn.textContent = editId ? 'আপডেট করুন' : 'যোগ করুন';
 }
 
 function startEdit(id) {
-  const c = customers.find(x => x.id === id); if (!c) return;
+  const c = customers.find(x => x.id === id);
+  if (!c) return;
   editId = id;
-  el('f-name').value = c.name; el('f-phone').value = c.phone || ''; el('f-price').value = c.price || '';
-  el('cust-form-title').textContent = '✏️ এডিট করুন';
-  el('cust-submit-btn').textContent = 'আপডেট করুন';
-  el('cust-cancel-btn').style.display = '';
+  document.getElementById('f-name').value = c.name;
+  document.getElementById('f-phone').value = c.phone || '';
+  document.getElementById('f-price').value = c.price || '';
+  document.getElementById('cust-form-title').textContent = '✏️ কাস্টমার এডিট';
+  document.getElementById('cust-submit-btn').textContent = 'আপডেট করুন';
+  document.getElementById('cust-cancel-btn').style.display = '';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
 function cancelEdit() {
   editId = null;
-  el('f-name').value = ''; el('f-phone').value = ''; el('f-price').value = '';
-  el('cust-form-title').textContent = '➕ নতুন কাস্টমার';
-  el('cust-submit-btn').textContent = 'যোগ করুন';
-  el('cust-cancel-btn').style.display = 'none';
+  ['f-name','f-phone','f-price'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('cust-form-title').textContent = '➕ নতুন কাস্টমার যোগ করুন';
+  document.getElementById('cust-submit-btn').textContent = 'যোগ করুন';
+  document.getElementById('cust-cancel-btn').style.display = 'none';
 }
+
 async function deleteCust(id) {
+  if (isReadOnly) return;
   if (!confirm('ডিলিট করবেন?')) return;
-  await dbDeleteCustomer(id);
-  selectedCusts.delete(id);
-  showToast('ডিলিট হয়েছে');
+  try {
+    setSyncState('syncing', 'মুছছে...');
+    await sbDelete('gs_customers', `id=eq.${id}`);
+    customers = customers.filter(c => c.id !== id);
+    setSyncState('ok', 'লাইভ');
+    showToast('ডিলিট হয়েছে');
+    renderCustomers();
+  } catch(e) {
+    showToast('❌ ডিলিট হয়নি');
+    setSyncState('err', 'সমস্যা');
+  }
 }
 
-// ════════════════════════════════════════
-// DAILY
-// ════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
+// DAILY LOG
+// ══════════════════════════════════════════════════════════════════
 function renderDaily() {
-  const date = el('daily-date').value || todayStr();
-  el('today-badge').style.display = date === todayStr() ? 'block' : 'none';
-  let tm = 0, tb = 0;
-  const list = el('daily-list');
-  if (!customers.length) { list.innerHTML = '<div class="empty">আগে কাস্টমার যোগ করুন</div>'; return; }
-  list.innerHTML = customers.map((c, i) => {
-    const qty = getQty(c.id, date), has = qty > 0;
-    tm += qty; tb += qty * (Number(c.price) || 0);
-    return `<div class="daily-item ${has ? 'has-entry' : ''}">
-      <div style="width:30px;height:30px;border-radius:8px;background:${has?'rgba(52,211,153,.15)':'rgba(59,158,255,.1)'};display:flex;align-items:center;justify-content:center;font-size:11px;color:${has?'var(--green)':'var(--blue)'};font-weight:800;flex-shrink:0;">${i+1}</div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-weight:700;font-size:13px;">${esc(c.name)}</div>
-        <div style="font-size:11px;color:var(--muted);">${c.price?`৳${c.price}/খাবার`:''} ${has&&c.price?`<span style="color:var(--gold);font-weight:700;">→ ৳${qty*Number(c.price)}</span>`:''}</div>
-      </div>
-      <div class="qty-ctrl">
-        <button class="qty-btn qty-minus" onclick="chQty('${c.id}','${date}',-1)" ${qty<=0?'disabled style="opacity:.3"':''}>−</button>
-        <input class="qty-input" style="border-color:${has?'var(--green)':'var(--border)'};" type="number" min="0" value="${qty||''}" placeholder="0" oninput="inpQty('${c.id}','${date}',this.value)">
-        <button class="qty-btn qty-plus" onclick="chQty('${c.id}','${date}',1)">+</button>
-      </div>
-    </div>`;
-  }).join('');
-  el('d-meals').textContent = `${tm}টি`;
-  el('d-bill').textContent  = `৳${tb.toLocaleString()}`;
+  const date = document.getElementById('daily-date').value || todayStr();
+  const badge = document.getElementById('daily-today-badge');
+  badge.style.display = date === todayStr() ? 'block' : 'none';
+
+  let totalMeals = 0, totalBill = 0;
+  const list = document.getElementById('daily-list');
+
+  if (customers.length === 0) {
+    list.innerHTML = '<div class="empty">আগে কাস্টমার ট্যাবে কাস্টমার যোগ করুন</div>';
+  } else {
+    list.innerHTML = customers.map((c, i) => {
+      const qty = getQty(c.id, date);
+      const has = qty > 0;
+      const bill = qty * (Number(c.price) || 0);
+      totalMeals += qty; totalBill += bill;
+      const disabled = isReadOnly ? 'disabled' : '';
+      return `
+        <div class="daily-item ${has ? 'has-entry' : ''}" id="di-${c.id}">
+          <div class="daily-num" style="background:${has?'rgba(52,211,153,.15)':'rgba(59,158,255,.1)'};color:${has?'var(--green)':'var(--blue)'};">${i+1}</div>
+          <div class="daily-info">
+            <div class="daily-name">${esc(c.name)}</div>
+            <div class="daily-meta">
+              ${c.price ? `<span>৳${c.price}/খাবার</span>` : '<span>দাম নেই</span>'}
+              ${has && c.price ? `<span style="color:var(--gold);font-weight:700;"> → ৳${(qty*Number(c.price)).toLocaleString()}</span>` : ''}
+            </div>
+          </div>
+          <div class="qty-ctrl">
+            <button class="qty-btn qty-minus" ${disabled} onclick="changeQty('${c.id}','${date}',-1)" ${qty<=0?'disabled':''}>−</button>
+            <input class="qty-input" ${disabled} style="border-color:${has?'var(--green)':'var(--border)'};" type="number" min="0" value="${qty||''}" placeholder="0"
+              oninput="inputQty('${c.id}','${date}',this.value)" onchange="inputQty('${c.id}','${date}',this.value)">
+            <button class="qty-btn qty-plus" ${disabled} onclick="changeQty('${c.id}','${date}',1)">+</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+  document.getElementById('daily-total-meals').textContent = `${totalMeals}টি`;
+  document.getElementById('daily-total-bill').textContent = `৳${totalBill.toLocaleString()}`;
 }
 
-async function chQty(cId, date, d) {
-  const q = Math.max(0, getQty(cId, date) + d);
+let qtyTimer = {};
+async function changeQty(custId, date, delta) {
+  if (isReadOnly) { showToast('শুধু দেখার মোড'); return; }
   const mk = monthKey(date);
   if (!logs[mk]) logs[mk] = {};
-  if (!logs[mk][cId]) logs[mk][cId] = {};
-  logs[mk][cId][date] = q;
+  if (!logs[mk][custId]) logs[mk][custId] = {};
+  const cur = logs[mk][custId][date] || 0;
+  const newQty = Math.max(0, cur + delta);
+  logs[mk][custId][date] = newQty;
   renderDaily();
-  await dbUpsertLog(cId, date, q);
+  await saveQty(custId, date, newQty);
 }
 
-function inpQty(cId, date, val) {
-  const q = Math.max(0, parseInt(val) || 0);
+async function inputQty(custId, date, val) {
+  if (isReadOnly) return;
   const mk = monthKey(date);
   if (!logs[mk]) logs[mk] = {};
-  if (!logs[mk][cId]) logs[mk][cId] = {};
-  logs[mk][cId][date] = q;
-  // Update summary
-  let tm = 0, tb = 0;
-  customers.forEach(c => { const qq = getQty(c.id, date); tm += qq; tb += qq*(Number(c.price)||0); });
-  el('d-meals').textContent = `${tm}টি`;
-  el('d-bill').textContent  = `৳${tb.toLocaleString()}`;
-  clearTimeout(qtyTimer);
-  qtyTimer = setTimeout(() => dbUpsertLog(cId, date, q), 900);
+  if (!logs[mk][custId]) logs[mk][custId] = {};
+  const qty = Math.max(0, parseInt(val) || 0);
+  logs[mk][custId][date] = qty;
+
+  // Update summary live
+  let totalMeals = 0, totalBill = 0;
+  customers.forEach(c => { const q = getQty(c.id, date); totalMeals += q; totalBill += q * (Number(c.price) || 0); });
+  document.getElementById('daily-total-meals').textContent = `${totalMeals}টি`;
+  document.getElementById('daily-total-bill').textContent = `৳${totalBill.toLocaleString()}`;
+
+  // Debounce save
+  clearTimeout(qtyTimer[custId]);
+  qtyTimer[custId] = setTimeout(() => saveQty(custId, date, qty), 800);
 }
 
-// ════════════════════════════════════════
+async function saveQty(custId, date, qty) {
+  try {
+    setSyncState('syncing', 'সেভ হচ্ছে...');
+    await sbUpsert('gs_logs', {
+      customer_id: custId,
+      log_date: date,
+      month_key: monthKey(date),
+      qty: qty
+    }, 'customer_id,log_date');
+    setSyncState('ok', 'লাইভ');
+  } catch(e) {
+    setSyncState('err', 'সেভ হয়নি');
+    showToast('❌ সেভ হয়নি — ইন্টারনেট চেক করুন');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
 // MONTHLY
-// ════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
 function renderMonthly() {
   const months = allMonths();
-  const sel = el('monthly-sel'), cur = sel.value || months[0];
-  sel.innerHTML = months.map(m => `<option value="${m}"${m===cur?' selected':''}>${monthLabel(m)}</option>`).join('');
+  const sel = document.getElementById('monthly-select');
+  const curVal = sel.value || months[0];
+  sel.innerHTML = months.map(m => `<option value="${m}" ${m===curVal?'selected':''}>${monthLabel(m)}</option>`).join('');
   const mk = sel.value || months[0];
-  const data = customers.map(c => ({ ...c, ...custMonthDetail(c.id, mk) })).filter(c => c.meals > 0);
-  const tm = data.reduce((s,c)=>s+c.meals,0), tb = data.reduce((s,c)=>s+c.bill,0), tp = data.reduce((s,c)=>s+c.paid,0);
-  el('m-custs').textContent = `${data.length}জন`;
-  el('m-meals').textContent = `${tm}টি`;
-  el('m-bill').textContent  = `৳${tb.toLocaleString()}`;
-  el('m-due').textContent   = `৳${(tb-tp).toLocaleString()}`;
-  const list = el('monthly-list');
-  if (!data.length) { list.innerHTML = '<div class="empty">এই মাসে কোনো ডেটা নেই</div>'; return; }
-  list.innerHTML = data.map((c,i) => `
+
+  const data = customers.map(c => { const {meals,bill} = custMonthDetail(c.id, mk); return {...c,meals,bill}; }).filter(c => c.meals > 0);
+  const totalMeals = data.reduce((s,c) => s + c.meals, 0);
+  const totalBill = data.reduce((s,c) => s + c.bill, 0);
+
+  document.getElementById('m-total-custs').textContent = `${data.length}জন`;
+  document.getElementById('m-total-meals').textContent = `${totalMeals}টি`;
+  document.getElementById('m-total-bill').textContent = `৳${totalBill.toLocaleString()}`;
+
+  const list = document.getElementById('monthly-list');
+  if (data.length === 0) { list.innerHTML = '<div class="empty">এই মাসে কোনো ডেটা নেই</div>'; return; }
+  list.innerHTML = data.map((c, i) => `
     <div class="month-item anim" onclick="openModal('${c.id}')">
-      <div style="width:32px;height:32px;border-radius:9px;background:rgba(240,180,41,.1);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--gold);font-size:12px;flex-shrink:0;">${i+1}</div>
-      <div style="flex:1;"><div style="font-weight:700;font-size:13px;">${esc(c.name)}</div>${c.phone?`<div style="font-size:10px;color:var(--muted);">📞 ${esc(c.phone)}</div>`:''}</div>
+      <div style="width:34px;height:34px;border-radius:10px;background:rgba(240,180,41,.1);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--gold);font-size:13px;flex-shrink:0;">${i+1}</div>
+      <div style="flex:1;">
+        <div style="font-weight:700;font-size:14px;">${esc(c.name)}</div>
+        ${c.phone ? `<div style="font-size:11px;color:var(--muted);margin-top:1px;">📞 ${esc(c.phone)}</div>` : ''}
+      </div>
       <div style="text-align:right;">
-        <div style="font-size:13px;color:var(--gold);font-weight:800;">৳${c.bill.toLocaleString()}</div>
-        ${c.paid>0?`<div style="font-size:10px;color:var(--green);">জমা ৳${c.paid.toLocaleString()}</div>`:''}
-        ${c.due>0?`<div style="font-size:10px;color:var(--red);">বাকি ৳${c.due.toLocaleString()}</div>`:''}
-        <div style="font-size:10px;color:var(--muted);">${c.meals}টি</div>
+        <div style="font-size:14px;color:var(--gold);font-weight:800;">৳${c.bill.toLocaleString()}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:1px;">${c.meals}টি খাবার</div>
       </div>
-    </div>`).join('');
-}
-
-// ════════════════════════════════════════
-// EXPORT TAB
-// ════════════════════════════════════════
-function renderExportCustList() {
-  const list = el('exp-cust-list');
-  if (!customers.length) { list.innerHTML = '<div class="empty">কোনো কাস্টমার নেই</div>'; return; }
-  list.innerHTML = customers.map(c => `
-    <div class="cb-item ${selectedCusts.has(c.id)?'selected':''}" onclick="toggleCust('${c.id}')">
-      <div class="cb-box">${selectedCusts.has(c.id)?'<svg width="12" height="12" viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg>':''}</div>
-      <div style="flex:1;"><div style="font-weight:600;font-size:13px;">${esc(c.name)}</div>${c.phone?`<div style="font-size:11px;color:var(--muted);">📞 ${esc(c.phone)}</div>`:''}</div>
-      ${c.price?`<div style="font-size:11px;color:var(--gold);">৳${c.price}/খাবার</div>`:''}
-    </div>`).join('');
-}
-function toggleCust(id) { selectedCusts.has(id) ? selectedCusts.delete(id) : selectedCusts.add(id); renderExportCustList(); }
-function selectAll() { customers.forEach(c => selectedCusts.add(c.id)); renderExportCustList(); }
-function clearAll()  { selectedCusts.clear(); renderExportCustList(); }
-
-function setRange(type) {
-  const now = new Date(); let from, to = todayStr();
-  if (type === 'this-month')  { from = todayStr().slice(0,8)+'01'; }
-  else if (type === 'last-month') { const d = new Date(now.getFullYear(),now.getMonth()-1,1); from = d.toISOString().slice(0,8)+'01'; to = new Date(now.getFullYear(),now.getMonth(),0).toISOString().slice(0,10); }
-  else if (type === '3months')    { const d = new Date(now.getFullYear(),now.getMonth()-2,1); from = d.toISOString().slice(0,8)+'01'; }
-  else { from = '2020-01-01'; }
-  el('exp-from').value = from; el('exp-to').value = to;
-}
-
-function getExportData() {
-  const custs = customers.filter(c => selectedCusts.has(c.id));
-  if (!custs.length) { showToast('কাস্টমার বেছে নিন'); return null; }
-  return custs.map(c => {
-    const monthData = allMonths().filter(mk => monthInRange(mk)).map(mk => {
-      const { entries, meals, bill, paid, due } = custMonthDetail(c.id, mk);
-      const fe = entries.filter(e => dateInRange(e.date));
-      const fm = fe.reduce((s,e)=>s+e.qty,0), fb = fm*(Number(c.price)||0);
-      return { mk, entries: fe, meals: fm, bill: fb, paid, due: fb-paid };
-    }).filter(m => m.meals > 0);
-    const totalMeals = monthData.reduce((s,m)=>s+m.meals,0);
-    const totalBill  = monthData.reduce((s,m)=>s+m.bill,0);
-    const totalPaid  = monthData.reduce((s,m)=>s+m.paid,0);
-    return { ...c, monthData, totalMeals, totalBill, totalPaid, totalDue: totalBill-totalPaid };
-  });
-}
-
-function exportPDF() {
-  const data = getExportData(); if (!data) return;
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  let y = 15;
-  doc.setFontSize(18); doc.setTextColor(240,180,41); doc.text('Ghorer Shad', 14, y); y += 7;
-  doc.setFontSize(10); doc.setTextColor(100,130,160); doc.text(`${el('exp-from').value} to ${el('exp-to').value}`, 14, y); y += 10;
-  data.forEach((c, ci) => {
-    if (y > 260) { doc.addPage(); y = 15; }
-    doc.setFillColor(14,28,43); doc.rect(14,y,182,10,'F');
-    doc.setFontSize(12); doc.setTextColor(240,180,41);
-    doc.text(`${c.name}${c.phone?' | '+c.phone:''}`, 16, y+7); y += 14;
-    c.monthData.forEach(m => {
-      if (y > 250) { doc.addPage(); y = 15; }
-      doc.setFontSize(10); doc.setTextColor(59,158,255); doc.text(monthLabel(m.mk), 14, y); y += 4;
-      doc.autoTable({
-        startY: y, margin: {left:14,right:14},
-        head: [['তারিখ','খাবার','বিল (৳)']],
-        body: m.entries.map(e => [fmtDate(e.date), `${e.qty}টি`, e.amount > 0 ? e.amount.toLocaleString() : '—']),
-        foot: [[{content:'মোট',styles:{fontStyle:'bold'}}, `${m.meals}টি`, m.bill>0?`৳${m.bill.toLocaleString()}`:'—']],
-        styles:{fontSize:9}, headStyles:{fillColor:[30,51,71],textColor:[240,180,41]},
-        footStyles:{fillColor:[20,35,50],textColor:[240,180,41]}, theme:'grid'
-      });
-      y = doc.lastAutoTable.finalY + 4;
-      doc.setFontSize(9); doc.setTextColor(52,211,153);
-      doc.text(`জমা: ৳${m.paid.toLocaleString()}  |  বাকি: ৳${m.due.toLocaleString()}`, 14, y); y += 8;
-    });
-    doc.setFontSize(10); doc.setTextColor(240,180,41);
-    doc.text(`মোট: ${c.totalMeals}টি | বিল: ৳${c.totalBill.toLocaleString()} | জমা: ৳${c.totalPaid.toLocaleString()} | বাকি: ৳${c.totalDue.toLocaleString()}`, 14, y);
-    y += 12;
-  });
-  doc.save(`GhorerShad_${el('exp-from').value}_${el('exp-to').value}.pdf`);
-  showToast('PDF তৈরি হচ্ছে ✓');
-}
-
-function exportCSV() {
-  const data = getExportData(); if (!data) return;
-  let csv = 'নাম,মোবাইল,মাস,তারিখ,খাবার,বিল (৳),জমা (৳),বাকি (৳)\n';
-  data.forEach(c => {
-    c.monthData.forEach(m => {
-      m.entries.forEach(e => { csv += `"${c.name}","${c.phone||''}","${monthLabel(m.mk)}","${fmtDate(e.date)}",${e.qty},${e.amount},,\n`; });
-      csv += `"${c.name}","${c.phone||''}","${monthLabel(m.mk)}","মোট",${m.meals},${m.bill},${m.paid},${m.due}\n\n`;
-    });
-    csv += `"${c.name}","","সব মাস মোট","",${c.totalMeals},${c.totalBill},${c.totalPaid},${c.totalDue}\n\n`;
-  });
-  dlFile(csv, `GhorerShad_${el('exp-from').value}_${el('exp-to').value}.csv`, 'text/csv;charset=utf-8;');
-  showToast('CSV তৈরি হচ্ছে ✓');
-}
-
-function exportTextShare() {
-  const data = getExportData(); if (!data) return;
-  let t = `🍱 ঘরের স্বাদ\n📅 ${el('exp-from').value} — ${el('exp-to').value}\n${'━'.repeat(28)}\n`;
-  data.forEach((c,i) => {
-    t += `\n${i+1}. ${c.name}${c.phone?` (${c.phone})`:''}\n`;
-    c.monthData.forEach(m => { t += `   ${monthLabel(m.mk)}: ${m.meals}টি | ৳${m.bill.toLocaleString()} | জমা: ৳${m.paid.toLocaleString()} | বাকি: ৳${m.due.toLocaleString()}\n`; });
-    t += `   ─ মোট: ${c.totalMeals}টি | ৳${c.totalBill.toLocaleString()} | বাকি: ৳${c.totalDue.toLocaleString()}\n`;
-  });
-  if (navigator.share) { navigator.share({title:'ঘরের স্বাদ',text:t}).catch(()=>{}); }
-  else { navigator.clipboard.writeText(t).then(()=>showToast('কপি হয়েছে ✓')); }
-}
-
-function dlFile(content, filename, type) {
-  const blob = new Blob(['\uFEFF' + content], { type });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
-}
-
-// ════════════════════════════════════════
-// CUSTOMER MODAL
-// ════════════════════════════════════════
-function openModal(cId) {
-  modalCustId = cId;
-  const c = customers.find(x => x.id === cId); if (!c) return;
-  el('modal-cust-name').textContent = c.name;
-  el('modal-cust-phone').textContent = c.phone ? `📞 ${c.phone}` : '';
-  const months = allMonths();
-  [el('modal-month-sel'), el('pay-month-sel')].forEach(s => {
-    s.innerHTML = months.map(m => `<option value="${m}">${monthLabel(m)}</option>`).join('');
-    s.value = months[0];
-  });
-  el('modal-overlay').classList.add('open');
-  setModalTab('month');
-}
-
-function setModalTab(tab) {
-  modalTab = tab;
-  el('mdl-month-view').style.display = tab==='month' ? '' : 'none';
-  el('mdl-all-view').style.display   = tab==='all'   ? '' : 'none';
-  el('mdl-pay-view').style.display   = tab==='pay'   ? '' : 'none';
-  ['month','all','pay'].forEach(t => {
-    el(`mdl-tab-${t}-btn`).className = 'btn btn-sm ' + (t===tab ? 'btn-blue' : 'btn-ghost');
-  });
-  if (tab==='month') renderModalMonth();
-  if (tab==='all')   renderModalAll();
-  if (tab==='pay')   renderPayHistory();
-}
-
-function renderModalMonth() {
-  const c = customers.find(x => x.id === modalCustId); if (!c) return;
-  const mk = el('modal-month-sel').value || allMonths()[0];
-  const { entries, meals, bill, paid, due } = custMonthDetail(c.id, mk);
-  el('mdl-name').textContent = c.name;
-  el('mdl-phone').textContent = c.phone ? `📞 ${c.phone}` : ''; el('mdl-phone').style.display = c.phone ? '' : 'none';
-  el('mdl-month').textContent = monthLabel(mk);
-  el('mdl-footer-date').textContent = new Date().toLocaleDateString('bn-BD');
-  el('mdl-pills').innerHTML = `
-    <div class="pill" style="background:rgba(59,158,255,.1);border:1px solid rgba(59,158,255,.1);"><div class="pill-val" style="color:var(--blue);">${meals}টি</div><div class="pill-label">খাবার</div></div>
-    <div class="pill" style="background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.1);"><div class="pill-val" style="color:var(--gold);">${bill>0?`৳${bill.toLocaleString()}`:'—'}</div><div class="pill-label">বিল</div></div>
-    <div class="pill" style="background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.1);"><div class="pill-val" style="color:var(--green);">${paid>0?`৳${paid.toLocaleString()}`:'—'}</div><div class="pill-label">জমা</div></div>
-    <div class="pill" style="background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.1);"><div class="pill-val" style="color:var(--red);">${due>0?`৳${due.toLocaleString()}`:'—'}</div><div class="pill-label">বাকি</div></div>`;
-  const tbl = el('mdl-table');
-  if (!entries.length) { tbl.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:18px 0;">এই মাসে কোনো ডেটা নেই</div>'; return; }
-  tbl.innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 50px 72px;padding:4px 5px;margin-bottom:2px;gap:4px;">
-      <span style="font-size:10px;color:var(--muted);font-weight:700;">তারিখ</span><span style="font-size:10px;color:var(--muted);font-weight:700;text-align:center;">খাবার</span><span style="font-size:10px;color:var(--muted);font-weight:700;text-align:center;">টাকা</span>
     </div>
-    ${entries.map((e,i) => `
-      <div style="display:grid;grid-template-columns:1fr 50px 72px;align-items:center;padding:6px 5px;border-radius:5px;gap:4px;${i%2===0?'background:rgba(255,255,255,.025)':''}">
-        <div style="font-size:12px;font-weight:500;">${fmtDate(e.date)}</div>
-        <div style="text-align:center;"><span class="badge badge-blue">${e.qty}টি</span></div>
-        <div style="text-align:center;font-size:12px;color:var(--gold);font-weight:600;">${e.amount>0?`৳${e.amount.toLocaleString()}`:'—'}</div>
-      </div>`).join('')}
-    <div style="display:grid;grid-template-columns:1fr 50px 72px;align-items:center;padding:9px 5px;margin-top:7px;border-top:1px solid var(--border);background:rgba(240,180,41,.06);border-radius:7px;gap:4px;">
-      <div style="font-size:12px;color:var(--gold);font-weight:800;">মোট</div>
-      <div style="text-align:center;font-size:12px;color:var(--blue);font-weight:800;">${meals}টি</div>
-      <div style="text-align:center;font-size:13px;color:var(--gold);font-weight:800;">${bill>0?`৳${bill.toLocaleString()}`:'—'}</div>
-    </div>`;
+  `).join('');
 }
 
-function renderModalAll() {
-  const c = customers.find(x => x.id === modalCustId); if (!c) return;
-  const all = custAllMonths(c.id);
-  const tM = all.reduce((s,m)=>s+m.meals,0), tB = all.reduce((s,m)=>s+m.bill,0), tP = all.reduce((s,m)=>s+m.paid,0);
-  let html = `<div class="gcard" style="margin-bottom:10px;">
-    <div style="font-weight:800;font-size:15px;">${esc(c.name)}</div>
-    ${c.phone?`<div style="font-size:12px;color:var(--muted);">📞 ${esc(c.phone)}</div>`:''}
-    <div class="pills" style="margin-top:4px;">
-      <div class="pill" style="background:rgba(59,158,255,.1);border:1px solid rgba(59,158,255,.1);"><div class="pill-val" style="color:var(--blue);">${tM}টি</div><div class="pill-label">মোট</div></div>
-      <div class="pill" style="background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.1);"><div class="pill-val" style="color:var(--gold);">৳${tB.toLocaleString()}</div><div class="pill-label">বিল</div></div>
-      <div class="pill" style="background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.1);"><div class="pill-val" style="color:var(--green);">৳${tP.toLocaleString()}</div><div class="pill-label">জমা</div></div>
-      <div class="pill" style="background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.1);"><div class="pill-val" style="color:var(--red);">৳${(tB-tP).toLocaleString()}</div><div class="pill-label">বাকি</div></div>
-    </div>
-  </div>`;
-  if (!all.length) { html += '<div class="empty">কোনো ডেটা নেই</div>'; }
-  else { all.forEach(m => {
-    html += `<div class="gcard" style="margin-bottom:8px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <div style="font-weight:700;font-size:13px;color:var(--blue);">${monthLabel(m.mk)}</div>
-        <div><span class="badge badge-blue">${m.meals}টি</span> <span class="badge badge-gold">৳${m.bill.toLocaleString()}</span>${m.paid>0?` <span class="badge badge-green">জমা ৳${m.paid.toLocaleString()}</span>`:''} ${m.due>0?`<span class="badge badge-red">বাকি ৳${m.due.toLocaleString()}</span>`:''}</div>
-      </div>
-      ${m.entries.map((e,i) => `
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:${i<m.entries.length-1?'1px solid rgba(255,255,255,.04)':'none'};">
-          <div style="font-size:12px;">${fmtDate(e.date)}</div>
-          <span class="badge badge-blue">${e.qty}টি</span>
-          <div style="font-size:12px;color:var(--gold);font-weight:600;">${e.amount>0?`৳${e.amount.toLocaleString()}`:'—'}</div>
-        </div>`).join('')}
-    </div>`;
-  }); }
-  el('mdl-all-content').innerHTML = html;
-}
-
-// ════════════════════════════════════════
-// PAYMENT
-// ════════════════════════════════════════
-async function addPayment() {
-  const mk  = el('pay-month-sel').value;
-  const amt = parseFloat(el('pay-amount').value) || 0;
-  if (!amt) { showToast('টাকার পরিমাণ দিন'); return; }
-  if (!payments[modalCustId]) payments[modalCustId] = {};
-  payments[modalCustId][mk] = amt;
-  await dbUpsertPayment(modalCustId, mk, amt);
-  el('pay-amount').value = '';
-  showToast('জমা সেভ হয়েছে ✓');
-  renderPayHistory();
-}
-
-function renderPayHistory() {
-  const c = customers.find(x => x.id === modalCustId); if (!c) return;
+// ══════════════════════════════════════════════════════════════════
+// REPORT
+// ══════════════════════════════════════════════════════════════════
+function renderReport() {
   const months = allMonths();
-  const withData = months.filter(mk => { const d = custMonthDetail(c.id, mk); return d.meals > 0 || getPaid(c.id, mk) > 0; });
-  let html = '<div style="font-size:11px;font-weight:700;color:var(--muted);padding:8px 0 6px;">📋 জমার ইতিহাস</div>';
-  if (!withData.length) { html += '<div class="empty">কোনো জমা নেই</div>'; el('pay-history').innerHTML = html; return; }
-  withData.forEach(mk => {
-    const d = custMonthDetail(c.id, mk);
-    html += `<div class="gcard" style="margin-bottom:8px;">
-      <div style="font-weight:700;font-size:13px;color:var(--blue);">${monthLabel(mk)}</div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-top:4px;">
-        <span>বিল: <b style="color:var(--gold);">৳${d.bill.toLocaleString()}</b></span>
-        <span>জমা: <b style="color:var(--green);">৳${d.paid.toLocaleString()}</b></span>
-        <span>বাকি: <b style="color:${d.due>0?'var(--red)':'var(--green)'};">৳${d.due.toLocaleString()}</b></span>
+  const sel = document.getElementById('report-select');
+  const curVal = sel.value || months[0];
+  sel.innerHTML = months.map(m => `<option value="${m}" ${m===curVal?'selected':''}>${monthLabel(m)}</option>`).join('');
+  const mk = sel.value || months[0];
+
+  const data = customers.map(c => { const {meals,bill} = custMonthDetail(c.id, mk); return {...c,meals,bill}; }).filter(c => c.meals > 0);
+  const totalMeals = data.reduce((s,c) => s + c.meals, 0);
+  const totalBill = data.reduce((s,c) => s + c.bill, 0);
+
+  document.getElementById('rep-month-label').textContent = `${monthLabel(mk)} — মাসিক রিপোর্ট`;
+  document.getElementById('rep-custs').textContent = `${data.length}জন`;
+  document.getElementById('rep-meals').textContent = `${totalMeals}টি`;
+  document.getElementById('rep-bill').textContent = `৳${totalBill.toLocaleString()}`;
+  document.getElementById('rep-date').textContent = new Date().toLocaleDateString('bn-BD');
+
+  const rows = document.getElementById('rep-rows');
+  if (data.length === 0) { rows.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px 0;">এই মাসে কোনো ডেটা নেই</div>'; document.getElementById('rep-total-row').style.display='none'; return; }
+
+  rows.innerHTML = data.map((c, i) => `
+    <div class="rep-row" style="${i%2===0?'background:rgba(255,255,255,.02)':''}">
+      <div class="rep-num">${i+1}</div>
+      <div>
+        <div class="rep-name">${esc(c.name)}</div>
+        ${c.phone ? `<div class="rep-phone">📞 ${esc(c.phone)}</div>` : ''}
       </div>
-    </div>`;
-  });
-  el('pay-history').innerHTML = html;
+      <div class="rep-meals"><span>${c.meals}টি</span></div>
+      <div class="rep-bill">${c.bill>0?`৳${c.bill.toLocaleString()}`:'—'}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('rep-total-row').style.display = '';
+  document.getElementById('rep-tot-meals').textContent = `${totalMeals}টি`;
+  document.getElementById('rep-tot-bill').textContent = totalBill>0 ? `৳${totalBill.toLocaleString()}` : '—';
 }
 
-// ════════════════════════════════════════
-// SINGLE CUSTOMER EXPORTS
-// ════════════════════════════════════════
-function downloadSinglePDF() {
-  const c = customers.find(x => x.id === modalCustId); if (!c) return;
-  const mk = el('modal-month-sel').value || allMonths()[0];
-  const { entries, meals, bill, paid, due } = custMonthDetail(c.id, mk);
-  const { jsPDF } = window.jspdf; const doc = new jsPDF(); let y = 15;
-  doc.setFontSize(16); doc.setTextColor(240,180,41); doc.text('Ghorer Shad', 14, y); y += 7;
-  doc.setFontSize(11); doc.setTextColor(100,130,160); doc.text(`${c.name}${c.phone?' | '+c.phone:''} | ${monthLabel(mk)}`, 14, y); y += 10;
-  doc.autoTable({ startY:y, margin:{left:14,right:14},
-    head:[['তারিখ','খাবার','বিল (৳)']],
-    body:entries.map(e=>[fmtDate(e.date),`${e.qty}টি`,e.amount>0?`৳${e.amount.toLocaleString()}`:'—']),
-    foot:[[{content:'মোট',styles:{fontStyle:'bold'}},{content:`${meals}টি`},{content:bill>0?`৳${bill.toLocaleString()}`:'—'}]],
-    styles:{fontSize:10}, headStyles:{fillColor:[46,117,182]}, theme:'grid'
-  });
-  y = doc.lastAutoTable.finalY + 6;
-  doc.setFontSize(10); doc.setTextColor(52,211,153); doc.text(`জমা: ৳${paid.toLocaleString()}  |  বাকি: ৳${due.toLocaleString()}`, 14, y);
-  doc.save(`${c.name}_${monthLabel(mk)}.pdf`); showToast('PDF ✓');
+function buildReportText() {
+  const mk = document.getElementById('report-select').value || allMonths()[0];
+  const data = customers.map(c => { const {meals,bill} = custMonthDetail(c.id,mk); return {...c,meals,bill}; }).filter(c => c.meals > 0);
+  const totalMeals = data.reduce((s,c) => s + c.meals, 0);
+  const totalBill = data.reduce((s,c) => s + c.bill, 0);
+  let t = `🍱 ঘরের স্বাদ\n📅 ${monthLabel(mk)}\n${'━'.repeat(28)}\n`;
+  data.forEach((c, i) => { t += `${i+1}. ${c.name}${c.phone?` (${c.phone})`:''}\n   খাবার: ${c.meals}টি`+(c.bill>0?` | বিল: ৳${c.bill.toLocaleString()}`:'')+ `\n`; });
+  t += `${'━'.repeat(28)}\nমোট: ${data.length}জন | ${totalMeals}টি খাবার`+(totalBill>0?` | ৳${totalBill.toLocaleString()}`:'');
+  return t;
 }
 
-function downloadSingleCSV() {
-  const c = customers.find(x => x.id === modalCustId); if (!c) return;
-  const mk = el('modal-month-sel').value || allMonths()[0];
-  const { entries, meals, bill, paid, due } = custMonthDetail(c.id, mk);
-  let csv = `ঘরের স্বাদ — ${c.name} — ${monthLabel(mk)}\n${c.phone?'মোবাইল: '+c.phone+'\n':''}\nতারিখ,খাবার,বিল (৳)\n`;
-  entries.forEach(e => { csv += `"${fmtDate(e.date)}",${e.qty},${e.amount}\n`; });
-  csv += `\nমোট,${meals},${bill}\nজমা,,${paid}\nবাকি,,${due}\n`;
-  dlFile(csv, `${c.name}_${monthLabel(mk)}.csv`, 'text/csv;charset=utf-8;'); showToast('CSV ✓');
+async function shareReport() {
+  const text = buildReportText();
+  if (navigator.share) { try { await navigator.share({ title: 'ঘরের স্বাদ রিপোর্ট', text }); return; } catch{} }
+  try { await navigator.clipboard.writeText(text); showToast('কপি হয়েছে ✓'); } catch { showToast('শেয়ার করা যায়নি'); }
 }
 
-function downloadAllPDF() {
-  const c = customers.find(x => x.id === modalCustId); if (!c) return;
-  const all = custAllMonths(c.id);
-  const { jsPDF } = window.jspdf; const doc = new jsPDF(); let y = 15;
-  doc.setFontSize(16); doc.setTextColor(240,180,41); doc.text('Ghorer Shad', 14, y); y += 7;
-  doc.setFontSize(11); doc.setTextColor(100,130,160); doc.text(`${c.name} | সব মাস`, 14, y); y += 8;
-  const tM=all.reduce((s,m)=>s+m.meals,0),tB=all.reduce((s,m)=>s+m.bill,0),tP=all.reduce((s,m)=>s+m.paid,0);
-  doc.setFontSize(10); doc.setTextColor(240,180,41);
-  doc.text(`মোট: ${tM}টি | বিল: ৳${tB.toLocaleString()} | জমা: ৳${tP.toLocaleString()} | বাকি: ৳${(tB-tP).toLocaleString()}`, 14, y); y += 9;
-  all.forEach(m => {
-    if (y > 250) { doc.addPage(); y = 15; }
-    doc.setFontSize(11); doc.setTextColor(59,158,255); doc.text(monthLabel(m.mk), 14, y); y += 4;
-    doc.autoTable({ startY:y, margin:{left:14,right:14},
-      head:[['তারিখ','খাবার','বিল (৳)']],
-      body:m.entries.map(e=>[fmtDate(e.date),`${e.qty}টি`,e.amount>0?`৳${e.amount.toLocaleString()}`:'—']),
-      foot:[[{content:'মোট'},{content:`${m.meals}টি`},{content:m.bill>0?`৳${m.bill.toLocaleString()}`:'—'}]],
-      styles:{fontSize:9}, headStyles:{fillColor:[46,117,182]}, theme:'grid'
-    });
-    y = doc.lastAutoTable.finalY + 3;
-    doc.setFontSize(9); doc.setTextColor(52,211,153);
-    doc.text(`জমা: ৳${m.paid.toLocaleString()}  বাকি: ৳${m.due.toLocaleString()}`, 14, y); y += 7;
-  });
-  doc.save(`${c.name}_সব_মাস.pdf`); showToast('PDF ✓');
-}
-
-function downloadAllCSV() {
-  const c = customers.find(x => x.id === modalCustId); if (!c) return;
-  const all = custAllMonths(c.id);
-  let csv = `ঘরের স্বাদ — ${c.name} — সব মাস\n${c.phone?'মোবাইল: '+c.phone+'\n':''}\n`;
-  all.forEach(m => {
-    csv += `${monthLabel(m.mk)}\nতারিখ,খাবার,বিল (৳)\n`;
-    m.entries.forEach(e => { csv += `"${fmtDate(e.date)}",${e.qty},${e.amount}\n`; });
-    csv += `মোট,${m.meals},${m.bill}\nজমা,,${m.paid}\nবাকি,,${m.due}\n\n`;
-  });
-  const tM=all.reduce((s,m)=>s+m.meals,0),tB=all.reduce((s,m)=>s+m.bill,0),tP=all.reduce((s,m)=>s+m.paid,0);
-  csv += `সর্বমোট,${tM},${tB}\nমোট জমা,,${tP}\nমোট বাকি,,${tB-tP}\n`;
-  dlFile(csv, `${c.name}_সব_মাস.csv`, 'text/csv;charset=utf-8;'); showToast('CSV ✓');
-}
-
-async function downloadDetailImg() {
-  const c = customers.find(x => x.id === modalCustId); if (!c) return;
-  const mk = el('modal-month-sel').value || allMonths()[0];
-  const btn = el('btn-img'); btn.disabled = true; btn.textContent = '⏳';
+async function downloadReport() {
+  const btn = document.getElementById('dl-report-btn');
+  btn.disabled = true; btn.textContent = '⏳ তৈরি হচ্ছে...';
   try {
-    const canvas = await html2canvas(el('modal-dl-card'), {backgroundColor:'#080f18',scale:2.5,useCORS:true,logging:false});
-    const a = document.createElement('a'); a.download = `${c.name}_${monthLabel(mk)}.png`; a.href = canvas.toDataURL('image/png'); a.click();
-    showToast('ছবি ✓');
-  } catch { showToast('স্ক্রিনশট নিন'); }
-  btn.disabled = false; btn.textContent = '📷 ছবি';
+    const canvas = await html2canvas(document.getElementById('report-card'), { backgroundColor: '#080f18', scale: 2.5, useCORS: true, logging: false });
+    const mk = document.getElementById('report-select').value || allMonths()[0];
+    const a = document.createElement('a'); a.download = `ঘরের_স্বাদ_${monthLabel(mk)}.png`; a.href = canvas.toDataURL('image/png'); a.click();
+    showToast('ছবি ডাউনলোড হচ্ছে ✓');
+  } catch { showToast('স্ক্রিনশট নিন — লং প্রেস করুন'); }
+  btn.disabled = false; btn.textContent = '📥 রিপোর্ট ছবি ডাউনলোড করুন';
 }
 
-function closeModal() { el('modal-overlay').classList.remove('open'); modalCustId = null; }
-function closeModalOutside(e) { if (e.target === el('modal-overlay')) closeModal(); }
+// ══════════════════════════════════════════════════════════════════
+// MODAL
+// ══════════════════════════════════════════════════════════════════
+function openModal(custId) {
+  modalCustId = custId;
+  const c = customers.find(x => x.id === custId);
+  if (!c) return;
+  document.getElementById('modal-cust-name').textContent = c.name;
+  document.getElementById('modal-cust-phone').textContent = c.phone ? `📞 ${c.phone}` : '';
+  document.getElementById('modal-cust-phone').style.display = c.phone ? '' : 'none';
+
+  const months = allMonths();
+  const msel = document.getElementById('modal-month-select');
+  msel.innerHTML = months.map(m => `<option value="${m}">${monthLabel(m)}</option>`).join('');
+  msel.value = months[0];
+
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('modal').classList.add('slide');
+  renderModalDetail();
+}
+
+function renderModalDetail() {
+  const c = customers.find(x => x.id === modalCustId);
+  if (!c) return;
+  const mk = document.getElementById('modal-month-select').value || allMonths()[0];
+  const { entries, meals, bill } = custMonthDetail(c.id, mk);
+
+  document.getElementById('mdl-name').textContent = c.name;
+  document.getElementById('mdl-phone').textContent = c.phone ? `📞 ${c.phone}` : '';
+  document.getElementById('mdl-phone').style.display = c.phone ? '' : 'none';
+  document.getElementById('mdl-month').textContent = monthLabel(mk);
+  document.getElementById('mdl-footer-date').textContent = new Date().toLocaleDateString('bn-BD');
+
+  document.getElementById('mdl-pills').innerHTML = `
+    <div class="pill" style="background:rgba(59,158,255,.1);border:1px solid rgba(59,158,255,.15);">
+      <div class="pill-val" style="color:var(--blue);">${meals}টি</div><div class="pill-label">মোট খাবার</div>
+    </div>
+    <div class="pill" style="background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.15);">
+      <div class="pill-val" style="color:var(--gold);">${bill>0?`৳${bill.toLocaleString()}`:'—'}</div><div class="pill-label">মোট বিল</div>
+    </div>
+    <div class="pill" style="background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.15);">
+      <div class="pill-val" style="color:var(--green);">${entries.length}দিন</div><div class="pill-label">মোট দিন</div>
+    </div>`;
+
+  const tbl = document.getElementById('mdl-table');
+  if (entries.length === 0) { tbl.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px 0;">এই মাসে কোনো ডেটা নেই</div>'; return; }
+
+  tbl.innerHTML = `
+    <div class="detail-tbl-head"><span>তারিখ</span><span>খাবার</span><span>টাকা</span></div>
+    ${entries.map((e, i) => `
+      <div class="detail-row" style="${i%2===0?'background:rgba(255,255,255,.02)':''}">
+        <div class="detail-date">${fmtDate(e.date)}</div>
+        <div class="detail-qty"><span>${e.qty}টি</span></div>
+        <div class="detail-amt">${e.amount>0?`৳${e.amount.toLocaleString()}`:'—'}</div>
+      </div>`).join('')}
+    <div class="detail-total">
+      <div class="lbl">মোট</div>
+      <div class="tot-qty">${meals}টি</div>
+      <div class="tot-amt">${bill>0?`৳${bill.toLocaleString()}`:'—'}</div>
+    </div>`;
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  modalCustId = null;
+}
+function closeModalOutside(e) { if (e.target === document.getElementById('modal-overlay')) closeModal(); }
+
+async function downloadDetail() {
+  const c = customers.find(x => x.id === modalCustId);
+  if (!c) return;
+  const mk = document.getElementById('modal-month-select').value || allMonths()[0];
+  const btn = document.getElementById('dl-detail-btn');
+  btn.disabled = true; btn.textContent = '⏳ তৈরি হচ্ছে...';
+  try {
+    const canvas = await html2canvas(document.getElementById('modal-dl-card'), { backgroundColor: '#080f18', scale: 2.5, useCORS: true, logging: false });
+    const a = document.createElement('a'); a.download = `${c.name}_${monthLabel(mk)}.png`; a.href = canvas.toDataURL('image/png'); a.click();
+    showToast('ছবি ডাউনলোড হচ্ছে ✓');
+  } catch { showToast('স্ক্রিনশট নিন — লং প্রেস করুন'); }
+  btn.disabled = false; btn.textContent = '📥 ছবি হিসেবে ডাউনলোড করুন';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// APP START
+// ══════════════════════════════════════════════════════════════════
+async function startApp() {
+  // Determine admin vs readonly
+  const params = new URLSearchParams(window.location.search);
+  const storedAdmin = localStorage.getItem('gs_is_admin');
+
+  if (params.get('admin') === '1' || storedAdmin === '1') {
+    isAdmin = true;
+    isReadOnly = false;
+    if (params.get('admin') === '1') localStorage.setItem('gs_is_admin', '1');
+  } else {
+    isAdmin = false;
+    isReadOnly = true;
+  }
+
+  // Update UI for admin/readonly
+  document.getElementById('admin-badge').className = isAdmin ? 'show' : '';
+  document.getElementById('readonly-banner').className = isReadOnly ? 'show' : '';
+
+  try {
+    document.getElementById('loading-msg').textContent = 'ডেটাবেস চেক হচ্ছে...';
+    await ensureTables();
+  } catch(e) {
+    if (e.message === 'TABLES_MISSING') {
+      document.getElementById('loading-screen').style.display = 'none';
+      showTableSetupGuide();
+      return;
+    }
+    document.getElementById('loading-msg').textContent = '❌ সংযোগ হয়নি — key চেক করুন';
+    return;
+  }
+
+  document.getElementById('loading-msg').textContent = 'ডেটা লোড হচ্ছে...';
+  await loadData();
+
+  // Show app
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('header').style.display = '';
+  document.getElementById('content').style.display = '';
+  document.getElementById('nav').style.display = '';
+
+  // Init UI
+  document.getElementById('daily-date').value = todayStr();
+  document.getElementById('header-month').textContent = monthLabel(monthKey(todayStr()));
+  document.getElementById('nav-daily').classList.add('active');
+  renderDaily();
+
+  // Start polling for realtime updates
+  setupRealtime();
+}
+
+function showTableSetupGuide() {
+  document.getElementById('loading-screen').innerHTML = `
+    <div style="padding:24px;max-width:400px;text-align:center;">
+      <div class="logo" style="margin:0 auto 16px;">🍱</div>
+      <h2 style="font-size:16px;margin-bottom:12px;">Supabase Table তৈরি করুন</h2>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:left;font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:16px;">
+        Supabase → SQL Editor → New Query তে এই SQL রান করুন:<br><br>
+        <code style="color:var(--green);font-size:11px;word-break:break-all;">
+          CREATE TABLE gs_customers (id text PRIMARY KEY, name text NOT NULL, phone text, price text, created_at timestamptz DEFAULT now());<br><br>
+          CREATE TABLE gs_logs (id bigserial PRIMARY KEY, customer_id text REFERENCES gs_customers(id) ON DELETE CASCADE, log_date date NOT NULL, month_key text NOT NULL, qty int DEFAULT 0, UNIQUE(customer_id, log_date));<br><br>
+          ALTER TABLE gs_customers ENABLE ROW LEVEL SECURITY;<br>
+          ALTER TABLE gs_logs ENABLE ROW LEVEL SECURITY;<br>
+          CREATE POLICY "public read" ON gs_customers FOR SELECT USING (true);<br>
+          CREATE POLICY "public read" ON gs_logs FOR SELECT USING (true);<br>
+          CREATE POLICY "public write" ON gs_customers FOR ALL USING (true);<br>
+          CREATE POLICY "public write" ON gs_logs FOR ALL USING (true);
+        </code>
+      </div>
+      <button class="btn btn-blue" onclick="location.reload()">✅ হয়ে গেছে — রিলোড করুন</button>
+    </div>
+  `;
+  document.getElementById('loading-screen').style.display = 'flex';
+  document.getElementById('loading-screen').style.flexDirection = 'column';
+  document.getElementById('loading-screen').style.alignItems = 'center';
+  document.getElementById('loading-screen').style.justifyContent = 'center';
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────
+(async function boot() {
+  // Check if keys are configured
+  const storedUrl = localStorage.getItem('gs_supabase_url');
+  const storedKey = localStorage.getItem('gs_supabase_key');
+
+  if (storedUrl && storedKey) {
+    supabaseUrl = storedUrl;
+    supabaseKey = storedKey;
+  }
+
+  // If still placeholder, show setup screen
+  if (supabaseUrl.includes('YOUR_PROJECT') || supabaseKey.includes('YOUR_ANON_KEY')) {
+    document.getElementById('loading-screen').style.display = 'none';
+    document.getElementById('setup-screen').classList.add('show');
+    document.getElementById('readonly-banner').className = ''; // hide until loaded
+    return;
+  }
+
+  await startApp();
+})();
 </script>
 </body>
 </html>
