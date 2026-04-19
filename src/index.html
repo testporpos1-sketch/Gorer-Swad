@@ -3,184 +3,413 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>ঘরের স্বাদ - Cloud</title>
+<meta name="theme-color" content="#080f18">
+<title>ঘরের স্বাদ</title>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
-  --bg:#080f18;--card:#0e1c2b;--border:#1a3347;
+  --bg:#080f18;--card:#0e1c2b;--card2:#132233;--border:#1a3347;
   --gold:#f0b429;--blue:#3b9eff;--green:#34d399;--red:#f87171;
   --purple:#a78bfa;--text:#e2eaf4;--muted:#4a6a88;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-body{font-family:'Hind Siliguri',sans-serif;background:var(--bg);color:var(--text);max-width:480px;margin:0 auto;padding-bottom:80px;}
-.inp{width:100%;background:#0a1525;border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);margin-bottom:10px;}
-.btn{border-radius:12px;padding:12px;font-weight:700;cursor:pointer;width:100%;border:none;margin-top:5px;}
-.btn-blue{background:var(--blue);color:#fff;}
-.btn-green{background:var(--green);color:#fff;}
-.btn-gold{background:rgba(240,180,41,0.1);border:1px solid var(--gold);color:var(--gold);}
-#header{background:#0c1e35;padding:15px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50;}
-.logo{width:40px;height:40px;background:var(--gold);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;}
-#nav{position:fixed;bottom:0;width:100%;max-width:480px;background:#060d18;border-top:1px solid var(--border);display:flex;z-index:100;}
-.nav-btn{flex:1;padding:10px;text-align:center;color:var(--muted);background:none;border:none;}
+body{font-family:'Hind Siliguri',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:480px;margin:0 auto;padding-bottom:80px;}
+input,select,button,textarea{font-family:inherit;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue)!important;}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+button:active{opacity:.75;transform:scale(.97);}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.anim{animation:fadeUp .25s ease;}
+.fadein{animation:fadeIn .2s ease;}
+
+/* Header */
+#header{background:linear-gradient(135deg,#060e1a,#0c1e35);padding:15px 18px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50;}
+.logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--gold),#c06000);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 4px 14px rgba(240,180,41,.3);}
+.header-text .title{font-weight:800;font-size:16px;}
+.header-text .sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.mode-badge{margin-left:auto;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;white-space:nowrap;}
+.mode-badge.admin{background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.35);color:var(--purple);}
+.mode-badge.view{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.25);color:var(--green);}
+
+/* Bottom Nav */
+#nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#060d18;border-top:1px solid var(--border);display:flex;z-index:100;}
+.nav-btn{flex:1;border:none;background:none;padding:10px 0 8px;cursor:pointer;color:var(--muted);transition:color .2s;position:relative;}
 .nav-btn.active{color:var(--gold);}
-.tab{display:none;padding:15px;}
+.nav-bar{position:absolute;top:0;left:50%;transform:translateX(-50%);width:28px;height:2px;background:var(--gold);border-radius:0 0 3px 3px;display:none;}
+.nav-btn.active .nav-bar{display:block;}
+.nav-icon{font-size:20px;}
+.nav-label{font-size:10px;margin-top:2px;}
+
+/* Content & Cards */
+#content{padding:14px 14px 0;}
+.tab{display:none;}
 .tab.active{display:block;}
 .gcard{background:var(--card);border-radius:16px;padding:14px;border:1px solid var(--border);margin-bottom:10px;}
-.person-card{background:var(--card);border-radius:14px;padding:12px;border:1px solid var(--border);display:flex;align-items:center;gap:10px;margin-bottom:8px;}
-.p-avatar{width:35px;height:35px;background:rgba(59,158,255,0.1);color:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;}
-#toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--blue);padding:8px 20px;border-radius:20px;display:none;z-index:1000;}
-#loading-overlay{position:fixed;inset:0;background:rgba(8,15,24,0.8);display:none;align-items:center;justify-content:center;z-index:2000;}
+.gcard-title{font-weight:700;font-size:13px;color:var(--blue);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+
+/* Inputs & Buttons */
+.inp{width:100%;background:#0a1525;border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);font-size:14px;}
+.label{font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600;}
+.field{margin-bottom:10px;}
+.btn{border:1px solid;border-radius:12px;padding:12px 16px;font-size:14px;font-weight:700;cursor:pointer;width:100%;text-align:center;}
+.btn-blue{background:linear-gradient(135deg,#1a6fd4,var(--blue));color:#fff;border-color:var(--blue);}
+.btn-gold{background:rgba(240,180,41,.12);color:var(--gold);border-color:rgba(240,180,41,.35);}
+.btn-green{background:linear-gradient(135deg,#059669,var(--green));color:#fff;border-color:var(--green);}
+.btn-ghost{background:transparent;color:var(--muted);border-color:var(--border);}
+
+/* Pills row */
+.pills{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;}
+.pill{border-radius:12px;padding:10px 8px;text-align:center;}
+.pill-val{font-size:15px;font-weight:800;}
+.pill-label{font-size:10px;color:var(--muted);margin-top:2px;}
+
+/* List items */
+.person-card{background:var(--card);border-radius:14px;padding:12px 14px;border:1px solid var(--border);display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:8px;}
+.p-avatar{width:38px;height:38px;border-radius:11px;background:rgba(59,158,255,.12);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:var(--blue);flex-shrink:0;}
+.p-info{flex:1;min-width:0;}
+.p-name{font-weight:700;font-size:14px;}
+.p-meta{font-size:11px;color:var(--muted);margin-top:2px;display:flex;gap:8px;}
+
+/* Summary table */
+.sum-table{width:100%;}
+.sum-head{display:grid;grid-template-columns:1fr 60px 90px;padding:5px 6px;border-bottom:1px solid var(--border);margin-bottom:4px;}
+.sum-head span{font-size:11px;color:var(--muted);font-weight:700;}
+.sum-row{display:grid;grid-template-columns:1fr 60px 90px;align-items:center;padding:8px 6px;border-radius:8px;}
+.sum-qty{text-align:center;font-weight:700;color:var(--blue);}
+.sum-amt{text-align:center;font-weight:700;color:var(--gold);}
+
+/* Modal & Toast */
+#modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:200;display:none;align-items:flex-end;justify-content:center;}
+#modal-overlay.open{display:flex;}
+#modal{width:100%;max-width:480px;background:var(--bg);border-radius:22px 22px 0 0;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;animation:slideUp .3s ease;}
+#toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#0c1e35;color:var(--text);padding:10px 22px;border-radius:24px;font-size:13px;z-index:999;border:1px solid var(--border);opacity:0;pointer-events:none;transition:opacity .3s;}
+#toast.show{opacity:1;}
+
+/* Login screen */
+#login-screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:300;align-items:center;justify-content:center;padding:24px;}
+#login-screen.show{display:flex;}
+.login-box{background:var(--card);border-radius:20px;padding:28px 24px;border:1px solid var(--border);width:100%;max-width:360px;}
+
+.admin-notice{background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2);border-radius:12px;padding:10px 13px;font-size:12px;color:var(--purple);margin-bottom:10px;}
+.search-wrap{position:relative;margin-bottom:10px;}
+.sec-label{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px;text-transform:uppercase;}
 </style>
 </head>
 <body>
 
-<div id="loading-overlay">ডাটা লোড হচ্ছে...</div>
-<div id="toast"></div>
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo" style="width:56px;height:56px;background:var(--gold);border-radius:16px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:26px;">🍱</div>
+    <div class="login-title" style="text-align:center;font-weight:800;">ঘরের স্বাদ</div>
+    <div class="login-sub" style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:20px;">Admin প্যানেলে প্রবেশ করুন</div>
+    <input type="password" class="inp" id="pw-input" placeholder="পাসওয়ার্ড..." style="margin-bottom:10px;">
+    <button class="btn btn-blue" onclick="doLogin()">প্রবেশ করুন</button>
+    <button class="btn btn-ghost" style="margin-top:8px;" onclick="closeLogin()">বাতিল</button>
+  </div>
+</div>
 
 <div id="header">
   <div class="logo">🍱</div>
-  <div><div style="font-weight:800;">ঘরের স্বাদ</div><div style="font-size:10px;color:var(--muted);">Supabase Cloud Mode</div></div>
-  <button id="mode-badge" onclick="handleAuth()" style="margin-left:auto;background:none;border:1px solid var(--border);color:var(--text);padding:4px 10px;border-radius:10px;font-size:11px;">👁️ View</button>
+  <div class="header-text">
+    <div class="title">ঘরের স্বাদ</div>
+    <div class="sub" id="header-sub">খাবারের হিসাব</div>
+  </div>
+  <div class="mode-badge view" id="mode-badge" onclick="handleModeClick()" style="cursor:pointer;">👁️ দেখুন</div>
 </div>
 
 <div id="content">
-  <div class="tab active" id="tab-home">
-    <div id="admin-fields" style="display:none;" class="gcard">
-      <div style="font-size:12px;margin-bottom:8px;color:var(--blue);">➕ নতুন এন্ট্রি</div>
-      <select id="p-select" class="inp"></select>
-      <input type="date" id="e-date" class="inp">
-      <input type="number" id="e-qty" class="inp" placeholder="খাবার সংখ্যা">
-      <button class="btn btn-green" onclick="addEntry()">সেভ করুন</button>
+  <div class="tab active anim" id="tab-home">
+    <div id="home-admin-notice" class="admin-notice" style="display:none;">🔐 Admin Mode চালু</div>
+    <div class="pills">
+      <div class="pill" style="background:rgba(59,158,255,.1);"><div class="pill-val" id="stat-persons">0</div><div class="pill-label">জন</div></div>
+      <div class="pill" style="background:rgba(52,211,153,.1);"><div class="pill-val" id="stat-meals">0</div><div class="pill-label">খাবার</div></div>
+      <div class="pill" style="background:rgba(240,180,41,.1);"><div class="pill-val" id="stat-bill">৳0</div><div class="pill-label">বিল</div></div>
     </div>
+    <select class="inp" id="home-month-sel" onchange="renderHome()" style="margin-bottom:12px;"></select>
+    
+    <div id="add-entry-card" class="gcard" style="display:none;">
+      <div class="gcard-title">➕ নতুন এন্ট্রি</div>
+      <select class="inp" id="entry-person-sel" style="margin-bottom:10px;"><option value="">ব্যক্তি বেছে নিন</option></select>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <input type="date" class="inp" id="entry-date">
+        <input type="number" class="inp" id="entry-qty" placeholder="খাবার সংখ্যা">
+      </div>
+      <input type="number" class="inp" id="entry-amt" placeholder="টাকা (ঐচ্ছিক)" style="margin-bottom:10px;">
+      <button class="btn btn-green" onclick="addEntry()">✓ সেভ করুন</button>
+    </div>
+    <div class="sec-label">এই মাসের তালিকা</div>
     <div id="person-list"></div>
   </div>
 
   <div class="tab" id="tab-persons">
-    <div id="admin-person" style="display:none;" class="gcard">
-      <input type="text" id="p-name" class="inp" placeholder="নাম">
-      <input type="tel" id="p-phone" class="inp" placeholder="ফোন">
-      <button class="btn btn-blue" onclick="addPerson()">ব্যক্তি যোগ করুন</button>
+    <div id="add-person-card" class="gcard" style="display:none;">
+      <div class="gcard-title">👤 নতুন ব্যক্তি</div>
+      <input type="text" class="inp" id="new-person-name" placeholder="নাম..." style="margin-bottom:10px;">
+      <input type="tel" class="inp" id="new-person-phone" placeholder="ফোন নম্বর..." style="margin-bottom:10px;">
+      <button class="btn btn-blue" onclick="addPerson()">✓ যোগ করুন</button>
     </div>
-    <div id="all-persons"></div>
+    <input type="text" class="inp" id="person-search" placeholder="🔍 খুঁজুন..." oninput="renderPersons()" style="margin-bottom:10px;">
+    <div id="all-person-list"></div>
   </div>
 
   <div class="tab" id="tab-report">
+    <select class="inp" id="rep-month-sel" onchange="renderReport()" style="margin-bottom:12px;"></select>
     <div class="gcard">
-      <div id="report-content"></div>
+      <div class="sum-table">
+        <div class="sum-head"><span>নাম</span><span>খাবার</span><span>টাকা</span></div>
+        <div id="rep-rows"></div>
+      </div>
     </div>
-    <button class="btn btn-gold" onclick="shareReport()">📤 রিপোর্ট শেয়ার</button>
+    <button class="btn btn-gold" onclick="shareReport()">📤 শেয়ার করুন</button>
   </div>
 </div>
 
 <div id="nav">
-  <button class="nav-btn active" onclick="showTab('home', this)">🏠 হোম</button>
-  <button class="nav-btn" onclick="showTab('persons', this)">👥 ব্যক্তি</button>
-  <button class="nav-btn" onclick="showTab('report', this)">📊 রিপোর্ট</button>
+  <button class="nav-btn active" onclick="showTab('home')"><div class="nav-icon">🏠</div><div class="nav-label">হোম</div></button>
+  <button class="nav-btn" onclick="showTab('persons')"><div class="nav-icon">👥</div><div class="nav-label">ব্যক্তি</div></button>
+  <button class="nav-btn" onclick="showTab('report')"><div class="nav-icon">📊</div><div class="nav-label">রিপোর্ট</div></button>
 </div>
 
-<script>
-// --- CONFIG (এখানে আপনার তথ্য দিন) ---
-const SB_URL = 'https://tsmpceurtrsfrobplqvj.supabase.co'; 
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRzbXBjZXVydHJzZnJvYnBscXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxMjk4MTIsImV4cCI6MjA5MDcwNTgxMn0.YM3APMc-8aY2ZTGOwRR-6JQP6_z8BdMl-YYjaG4ysJQ';
-const supabase = supabase.createClient(SB_URL, SB_KEY);
-const ADMIN_PASS = "ghorer2024";
+<div id="modal-overlay" onclick="closeModalOutside(event)">
+  <div id="modal">
+    <div style="padding:18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;">
+      <div id="mdl-name" style="font-weight:700;"></div>
+      <button onclick="closeModal()" style="background:none;border:none;color:var(--muted);font-size:20px;">✕</button>
+    </div>
+    <div id="modal-body" style="padding:14px;overflow-y:auto;">
+       <div id="mdl-entries"></div>
+    </div>
+  </div>
+</div>
 
+<div id="toast"></div>
+
+<script>
+// --- SUPABASE CONFIG (এখানে আপনার ডাটা বসান) ---
+const SB_URL = 'YOUR_SUPABASE_URL'; 
+const SB_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+
+const ADMIN_PASS = "ghorer2024";
+let isAdmin = false;
 let persons = [];
 let entries = [];
-let isAdmin = false;
+let modalPersonId = null;
 
 // --- CLOUD SYNC ---
-async function loadFromCloud() {
-  document.getElementById('loading-overlay').style.display = 'flex';
-  const { data, error } = await supabase.from('app_data').select('*').eq('id', 1).single();
-  if (data) {
-    persons = JSON.parse(data.persons);
-    entries = JSON.parse(data.entries);
-    renderAll();
-  }
-  document.getElementById('loading-overlay').style.display = 'none';
+async function syncToCloud() {
+  try {
+    await supabaseClient.from('app_data').upsert({ 
+        id: 1, 
+        persons: JSON.stringify(persons), 
+        entries: JSON.stringify(entries) 
+    });
+  } catch(e) { console.error("Sync Error", e); }
 }
 
-async function saveToCloud() {
-  await supabase.from('app_data').upsert({ 
-    id: 1, 
-    persons: JSON.stringify(persons), 
-    entries: JSON.stringify(entries) 
-  });
-  showToast('ক্লাউডে সেভ হয়েছে!');
+async function loadData() {
+  try {
+    const { data } = await supabaseClient.from('app_data').select('*').eq('id', 1).single();
+    if (data) {
+      persons = JSON.parse(data.persons || "[]");
+      entries = JSON.parse(data.entries || "[]");
+      renderAll();
+    }
+  } catch(e) { console.log("Offline or Load Error"); }
 }
 
-// --- APP LOGIC ---
-function showTab(name, btn) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-  btn.classList.add('active');
+async function savePersons() { await syncToCloud(); }
+async function saveEntries() { await syncToCloud(); }
+
+// --- HELPERS ---
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
 }
 
-function handleAuth() {
-  if(isAdmin) { isAdmin = false; updateUI(); }
-  else {
-    let p = prompt("Admin পাসওয়ার্ড দিন:");
-    if(p === ADMIN_PASS) { isAdmin = true; updateUI(); }
-    else { alert("ভুল পাসওয়ার্ড!"); }
-  }
+function allMonths() {
+  const set = new Set();
+  set.add(new Date().toISOString().slice(0,7));
+  entries.forEach(e => { if(e.date) set.add(e.date.slice(0,7)); });
+  return [...set].sort().reverse();
 }
 
-function updateUI() {
-  document.getElementById('admin-fields').style.display = isAdmin ? 'block' : 'none';
-  document.getElementById('admin-person').style.display = isAdmin ? 'block' : 'none';
-  document.getElementById('mode-badge').textContent = isAdmin ? '🔐 Admin' : '👁️ View';
-  renderAll();
+function monthLabel(mk) {
+  const [y,m] = mk.split('-');
+  const names = ['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'];
+  return `${names[parseInt(m)-1]} ${y}`;
 }
 
+// --- CORE ACTIONS ---
 async function addPerson() {
-  let name = document.getElementById('p-name').value;
-  if(!name) return;
-  persons.push({id: Date.now(), name, phone: document.getElementById('p-phone').value});
-  await saveToCloud();
+  const name = document.getElementById('new-person-name').value.trim();
+  const phone = document.getElementById('new-person-phone').value.trim();
+  if(!name) return showToast('নাম দিন');
+  persons.push({id:uid(), name, phone});
+  await savePersons();
+  document.getElementById('new-person-name').value='';
   renderAll();
+  showToast('যোগ হয়েছে');
 }
 
 async function addEntry() {
-  let pid = document.getElementById('p-select').value;
-  let qty = document.getElementById('e-qty').value;
-  let date = document.getElementById('e-date').value;
-  if(!pid || !qty || !date) return;
-  entries.push({pid, qty, date});
-  await saveToCloud();
+  const personId = document.getElementById('entry-person-sel').value;
+  const date = document.getElementById('entry-date').value;
+  const qty = parseInt(document.getElementById('entry-qty').value)||1;
+  const amount = parseFloat(document.getElementById('entry-amt').value)||0;
+  if(!personId || !date) return showToast('সব তথ্য দিন');
+  entries.push({id:uid(), personId, date, qty, amount});
+  await saveEntries();
+  renderAll();
+  showToast('সেভ হয়েছে');
+}
+
+async function deletePerson(id) {
+  if(!confirm('মুছে ফেলবেন?')) return;
+  persons = persons.filter(p=>p.id!==id);
+  entries = entries.filter(e=>e.personId!==id);
+  await syncToCloud();
   renderAll();
 }
 
+// --- UI RENDER ---
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
 function renderAll() {
-  // Person Select
-  const sel = document.getElementById('p-select');
-  sel.innerHTML = persons.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  const months = allMonths();
+  const opts = months.map(m=>`<option value="${m}">${monthLabel(m)}</option>`).join('');
+  document.getElementById('home-month-sel').innerHTML = opts;
+  document.getElementById('rep-month-sel').innerHTML = opts;
+  
+  const sel = document.getElementById('entry-person-sel');
+  sel.innerHTML = '<option value="">ব্যক্তি বেছে নিন</option>' + 
+    persons.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+    
+  renderHome();
+  renderPersons();
+  renderReport();
+}
 
-  // Home List
+function renderHome() {
+  const mk = document.getElementById('home-month-sel').value || allMonths()[0];
+  const monthEntries = entries.filter(e=>e.date && e.date.startsWith(mk));
+  const activeIds = new Set(monthEntries.map(e=>e.personId));
+  
+  document.getElementById('stat-persons').textContent = activeIds.size;
+  document.getElementById('stat-meals').textContent = monthEntries.reduce((s,e)=>s+Number(e.qty),0);
+  document.getElementById('stat-bill').textContent = '৳' + monthEntries.reduce((s,e)=>s+Number(e.amount),0);
+
   const list = document.getElementById('person-list');
-  list.innerHTML = persons.map(p => {
-    let count = entries.filter(e => e.pid == p.id).reduce((s,e)=>s+Number(e.qty), 0);
-    return `<div class="person-card"><div class="p-avatar">${p.name[0]}</div><div><b>${p.name}</b><br><small>${count} টি খাবার</small></div></div>`;
-  }).join('');
+  const data = persons.map(p => {
+    const ents = entries.filter(e=>e.personId===p.id && e.date.startsWith(mk));
+    const meals = ents.reduce((s,e)=>s+Number(e.qty),0);
+    return {...p, meals};
+  }).filter(p=>p.meals > 0 || isAdmin);
 
-  // Report
-  document.getElementById('report-content').innerHTML = persons.map(p => {
-    let count = entries.filter(e => e.pid == p.id).reduce((s,e)=>s+Number(e.qty), 0);
-    return `<div style="display:flex;justify-content:space-between;padding:5px 0;"><span>${p.name}</span><b>${count} টি</b></div>`;
-  }).join('');
+  list.innerHTML = data.map(p => `
+    <div class="person-card" onclick="openModal('${p.id}')">
+      <div class="p-avatar">${p.name[0]}</div>
+      <div class="p-info">
+        <div class="p-name">${esc(p.name)}</div>
+        <div class="p-meta">🍽 ${p.meals}টি খাবার</div>
+      </div>
+    </div>
+  `).join('');
 }
 
-function showToast(m) {
-  let t = document.getElementById('toast');
-  t.textContent = m; t.style.display = 'block';
-  setTimeout(() => t.style.display = 'none', 2000);
+function renderPersons() {
+  const list = document.getElementById('all-person-list');
+  list.innerHTML = persons.map(p => `
+    <div class="person-card">
+      <div class="p-avatar">${p.name[0]}</div>
+      <div class="p-info">
+        <div class="p-name">${esc(p.name)}</div>
+        <div class="p-meta">${p.phone || 'No Phone'}</div>
+      </div>
+      ${isAdmin ? `<button onclick="deletePerson('${p.id}')" style="background:none;border:none;color:var(--red);">🗑</button>` : ''}
+    </div>
+  `).join('');
 }
 
-// Init
-document.getElementById('e-date').value = new Date().toISOString().slice(0,10);
-loadFromCloud();
+function renderReport() {
+  const mk = document.getElementById('rep-month-sel').value;
+  const rows = document.getElementById('rep-rows');
+  const data = persons.map(p => {
+    const ents = entries.filter(e=>e.personId===p.id && e.date.startsWith(mk));
+    const meals = ents.reduce((s,e)=>s+Number(e.qty),0);
+    const bill = ents.reduce((s,e)=>s+Number(e.amount),0);
+    return {name:p.name, meals, bill};
+  }).filter(p=>p.meals > 0);
+
+  rows.innerHTML = data.map(p => `
+    <div class="sum-row">
+      <span>${esc(p.name)}</span>
+      <span class="sum-qty">${p.meals}টি</span>
+      <span class="sum-amt">৳${p.bill}</span>
+    </div>
+  `).join('');
+}
+
+// --- AUTH ---
+function handleModeClick() {
+  if(isAdmin) { isAdmin=false; updateAdminUI(); }
+  else { document.getElementById('login-screen').classList.add('show'); }
+}
+function doLogin() {
+  if(document.getElementById('pw-input').value === ADMIN_PASS) {
+    isAdmin=true; updateAdminUI(); closeLogin();
+  } else showToast('ভুল পাসওয়ার্ড');
+}
+function closeLogin() { document.getElementById('login-screen').classList.remove('show'); }
+function updateAdminUI() {
+  const badge = document.getElementById('mode-badge');
+  badge.className = isAdmin ? 'mode-badge admin' : 'mode-badge view';
+  badge.textContent = isAdmin ? '🔐 Admin' : '👁️ দেখুন';
+  document.getElementById('home-admin-notice').style.display = isAdmin ? '' : 'none';
+  document.getElementById('add-entry-card').style.display = isAdmin ? '' : 'none';
+  document.getElementById('add-person-card').style.display = isAdmin ? '' : 'none';
+  renderAll();
+}
+
+// --- MODAL ---
+function openModal(id) {
+  modalPersonId = id;
+  const p = persons.find(x=>x.id===id);
+  document.getElementById('mdl-name').textContent = p.name;
+  const mk = document.getElementById('home-month-sel').value;
+  const ents = entries.filter(e=>e.personId===id && e.date.startsWith(mk));
+  
+  document.getElementById('mdl-entries').innerHTML = ents.map(e => `
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #1a3347;">
+      <span>${e.date}</span>
+      <span>${e.qty}টি</span>
+      <span>৳${e.amount}</span>
+    </div>
+  `).join('');
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function closeModalOutside(e) { if(e.target.id==='modal-overlay') closeModal(); }
+
+async function shareReport() {
+  showToast('রিপোর্ট তৈরি হচ্ছে...');
+}
+
+// --- INIT ---
+loadData();
 </script>
 </body>
 </html>
