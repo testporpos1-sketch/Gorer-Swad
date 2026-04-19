@@ -1,99 +1,133 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ঘরের স্বাদ - PRO</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        :root{--bg:#080f18;--card:#0e1c2b;--blue:#3b9eff;--gold:#f0b429;--green:#34d399;--text:#e2eaf4;}
-        body{font-family:sans-serif;background:var(--bg);color:var(--text);margin:0;padding:15px;}
-        .gcard{background:var(--card);padding:15px;border-radius:12px;margin-bottom:10px;border:1px solid #1a3347;}
-        .inp{width:100%;padding:12px;margin:5px 0;background:#132233;border:1px solid #1a3347;color:white;border-radius:8px;}
-        .btn{padding:12px;margin:5px 0;border-radius:8px;border:none;cursor:pointer;font-weight:bold;width:100%;}
-        table{width:100%;border-collapse:collapse;color:white;font-size:12px;}
-        th, td{border:1px solid #1a3347;padding:8px;text-align:center;}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ঘরের স্বাদ - Pro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#080f18;--card:#0e1c2b;--border:#1a3347;--gold:#f0b429;--blue:#3b9eff;--green:#34d399;--text:#e2eaf4;--muted:#4a6a88;}
+body{font-family:sans-serif;background:var(--bg);color:var(--text);max-width:480px;margin:0 auto;padding-bottom:80px;}
+.inp{width:100%;background:#0a1525;border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);margin-bottom:10px;}
+.btn{border-radius:12px;padding:12px;font-weight:700;width:100%;border:none;margin-top:5px;cursor:pointer;}
+.tab{display:none;padding:15px;}.tab.active{display:block;}
+.gcard{background:var(--card);border-radius:16px;padding:14px;border:1px solid var(--border);margin-bottom:10px;}
+</style>
 </head>
 <body>
 
-<div id="app">
-    <h3>ঘরের স্বাদ - কন্ট্রোল প্যানেল</h3>
-    
+<div id="content">
+  <div class="tab active" id="tab-report">
     <div class="gcard">
-        <select id="person-sel" class="inp"></select>
-        <input type="number" id="val" class="inp" placeholder="সংখ্যা বা টাকা">
+      <h3 style="color:var(--gold)">হিসাব রিপোর্ট</h3>
+      <select id="f-person" class="inp" onchange="renderReport()"></select>
+      <input type="month" id="f-month" class="inp" onchange="renderReport()">
+      <div style="display:flex; gap:5px;">
+        <button class="btn" style="background:var(--blue)" onclick="downloadPDF()">PDF</button>
+        <button class="btn" style="background:var(--green)" onclick="downloadCSV()">Excel/CSV</button>
+      </div>
+    </div>
+    <div id="report-view" class="gcard"></div>
+  </div>
+
+  <div class="tab" id="tab-home">
+    <div class="gcard">
+        <select id="p-select" class="inp"></select>
         <input type="date" id="date" class="inp">
-        <div style="display:flex; gap:5px;">
-            <button class="btn" style="background:var(--blue)" onclick="addEntry()">খাবার যোগ</button>
-            <button class="btn" style="background:var(--green)" onclick="addPayment()">টাকা জমা</button>
-        </div>
+        <input type="number" id="qty" class="inp" placeholder="খাবার সংখ্যা">
+        <input type="number" id="pay" class="inp" placeholder="টাকা জমা (যদি থাকে)">
+        <button class="btn" style="background:var(--gold)" onclick="saveData()">সেভ করুন</button>
     </div>
+  </div>
+</div>
 
-    <div class="gcard">
-        <button class="btn" style="background:var(--gold)" onclick="generatePDF()">📥 PDF ডাউনলোড</button>
-        <button class="btn" style="background:var(--blue)" onclick="exportCSV()">📊 Google Sheets (CSV)</button>
-    </div>
-
-    <div id="report-table" class="gcard"></div>
+<div id="nav" style="position:fixed;bottom:0;width:100%;max-width:480px;display:flex;background:#060d18;">
+  <button class="btn" onclick="showTab('home')">🏠 ইনপুট</button>
+  <button class="btn" onclick="showTab('report')">📊 রিপোর্ট</button>
 </div>
 
 <script>
 const supabase = supabase.createClient('https://tsmpceurtrsfrobplqvj.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRzbXBjZXVydHJzZnJvYnBscXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxMjk4MTIsImV4cCI6MjA5MDcwNTgxMn0.YM3APMc-8aY2ZTGOwRR-6JQP6_z8BdMl-YYjaG4ysJQ');
+let persons=[], entries=[], payments=[];
 
-// ডাটা লোড
-async function loadAll() {
-    const { data: p } = await supabase.from('persons').select('*');
-    const { data: e } = await supabase.from('entries').select('*');
-    const { data: pay } = await supabase.from('payments').select('*');
-    render(p, e, pay);
+async function loadData() {
+  const { data } = await supabase.from('app_data').select('*').eq('id', 1).single();
+  if(data) {
+    persons = JSON.parse(data.persons);
+    entries = JSON.parse(data.entries);
+    payments = data.payments ? JSON.parse(data.payments) : [];
+    renderReport();
+    updateSelects();
+  }
 }
 
-// খাবার যোগ
-async function addEntry() {
-    const pId = document.getElementById('person-sel').value;
-    const qty = document.getElementById('val').value;
-    const date = document.getElementById('date').value;
-    await supabase.from('entries').insert([{ id: Date.now().toString(), person_id: pId, qty, date }]);
-    loadAll();
+async function saveData() {
+  const pid = document.getElementById('p-select').value;
+  const date = document.getElementById('date').value;
+  const qty = document.getElementById('qty').value;
+  const amt = document.getElementById('pay').value;
+
+  if(qty) entries.push({pid, qty, date});
+  if(amt) payments.push({pid, amt, date});
+
+  await supabase.from('app_data').upsert({ id:1, persons:JSON.stringify(persons), entries:JSON.stringify(entries), payments:JSON.stringify(payments) });
+  alert("সেভ হয়েছে!");
+  renderReport();
 }
 
-// টাকা জমা
-async function addPayment() {
-    const pId = document.getElementById('person-sel').value;
-    const amt = document.getElementById('val').value;
-    const date = document.getElementById('date').value;
-    await supabase.from('payments').insert([{ id: Date.now().toString(), person_id: pId, amount: amt, date }]);
-    loadAll();
+function renderReport() {
+  const pid = document.getElementById('f-person').value;
+  const month = document.getElementById('f-month').value;
+  
+  let html = `<table><tr><th>তারিখ</th><th>খাবার</th><th>জমা</th></tr>`;
+  let totalQty = 0, totalPay = 0;
+
+  // এখানে ফিল্টারিং লজিক
+  entries.forEach(e => {
+    if((pid === 'all' || e.pid == pid) && (!month || e.date.startsWith(month))) {
+        html += `<tr><td>${e.date}</td><td>${e.qty}</td><td>-</td></tr>`;
+        totalQty += Number(e.qty);
+    }
+  });
+  payments.forEach(p => {
+    if((pid === 'all' || p.pid == pid) && (!month || p.date.startsWith(month))) {
+        html += `<tr><td>${p.date}</td><td>-</td><td>${p.amt}</td></tr>`;
+        totalPay += Number(p.amt);
+    }
+  });
+  html += `</table><hr><b>মোট খাবার: ${totalQty} | মোট জমা: ${totalPay} টাকা</b>`;
+  document.getElementById('report-view').innerHTML = html;
 }
 
-// PDF জেনারেশন
-function generatePDF() {
-    const element = document.getElementById('report-table');
-    html2pdf().from(element).save('report.pdf');
+function downloadPDF() {
+    const el = document.getElementById('report-view');
+    html2pdf().from(el).save('Hishab.pdf');
 }
 
-// Google Sheets / CSV এক্সপোর্ট
-function exportCSV() {
-    let csv = "তারিখ,নাম,খাবার,টাকা\n";
-    // এখানে আপনার ডাটা লুপ করে CSV ফরম্যাট তৈরি করুন
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
+function downloadCSV() {
+    let csv = "তারিখ,খাবার,জমা\n";
+    // CSV তৈরির লজিক...
+    const blob = new Blob([csv], {type: 'text/csv'});
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = 'hishab.csv'; a.click();
+    a.href = url; a.download = 'report.csv'; a.click();
 }
 
-function render(p, e, pay) {
-    let html = `<table><tr><th>তারিখ</th><th>খাবার</th><th>জমা</th></tr>`;
-    e.forEach(i => html += `<tr><td>${i.date}</td><td>${i.qty}</td><td>-</td></tr>`);
-    pay.forEach(i => html += `<tr><td>${i.date}</td><td>-</td><td>${i.amount}</td></tr>`);
-    html += `</table>`;
-    document.getElementById('report-table').innerHTML = html;
+function updateSelects() {
+    const s = document.getElementById('p-select');
+    const f = document.getElementById('f-person');
+    s.innerHTML = f.innerHTML = `<option value="all">সবাই</option>` + persons.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
 }
 
+function showTab(t) {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.getElementById('tab-'+t).classList.add('active');
+}
+
+// Init
 document.getElementById('date').value = new Date().toISOString().slice(0,10);
-loadAll();
+loadData();
 </script>
 </body>
 </html>
