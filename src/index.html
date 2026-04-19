@@ -2,132 +2,185 @@
 <html lang="bn">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ঘরের স্বাদ - Pro</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ঘরের স্বাদ - Cloud</title>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--bg:#080f18;--card:#0e1c2b;--border:#1a3347;--gold:#f0b429;--blue:#3b9eff;--green:#34d399;--text:#e2eaf4;--muted:#4a6a88;}
-body{font-family:sans-serif;background:var(--bg);color:var(--text);max-width:480px;margin:0 auto;padding-bottom:80px;}
+:root{
+  --bg:#080f18;--card:#0e1c2b;--border:#1a3347;
+  --gold:#f0b429;--blue:#3b9eff;--green:#34d399;--red:#f87171;
+  --purple:#a78bfa;--text:#e2eaf4;--muted:#4a6a88;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Hind Siliguri',sans-serif;background:var(--bg);color:var(--text);max-width:480px;margin:0 auto;padding-bottom:80px;}
 .inp{width:100%;background:#0a1525;border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);margin-bottom:10px;}
-.btn{border-radius:12px;padding:12px;font-weight:700;width:100%;border:none;margin-top:5px;cursor:pointer;}
-.tab{display:none;padding:15px;}.tab.active{display:block;}
+.btn{border-radius:12px;padding:12px;font-weight:700;cursor:pointer;width:100%;border:none;margin-top:5px;}
+.btn-blue{background:var(--blue);color:#fff;}
+.btn-green{background:var(--green);color:#fff;}
+.btn-gold{background:rgba(240,180,41,0.1);border:1px solid var(--gold);color:var(--gold);}
+#header{background:#0c1e35;padding:15px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50;}
+.logo{width:40px;height:40px;background:var(--gold);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+#nav{position:fixed;bottom:0;width:100%;max-width:480px;background:#060d18;border-top:1px solid var(--border);display:flex;z-index:100;}
+.nav-btn{flex:1;padding:10px;text-align:center;color:var(--muted);background:none;border:none;}
+.nav-btn.active{color:var(--gold);}
+.tab{display:none;padding:15px;}
+.tab.active{display:block;}
 .gcard{background:var(--card);border-radius:16px;padding:14px;border:1px solid var(--border);margin-bottom:10px;}
+.person-card{background:var(--card);border-radius:14px;padding:12px;border:1px solid var(--border);display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.p-avatar{width:35px;height:35px;background:rgba(59,158,255,0.1);color:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;}
+#toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--blue);padding:8px 20px;border-radius:20px;display:none;z-index:1000;}
+#loading-overlay{position:fixed;inset:0;background:rgba(8,15,24,0.8);display:none;align-items:center;justify-content:center;z-index:2000;}
 </style>
 </head>
 <body>
 
+<div id="loading-overlay">ডাটা লোড হচ্ছে...</div>
+<div id="toast"></div>
+
+<div id="header">
+  <div class="logo">🍱</div>
+  <div><div style="font-weight:800;">ঘরের স্বাদ</div><div style="font-size:10px;color:var(--muted);">Supabase Cloud Mode</div></div>
+  <button id="mode-badge" onclick="handleAuth()" style="margin-left:auto;background:none;border:1px solid var(--border);color:var(--text);padding:4px 10px;border-radius:10px;font-size:11px;">👁️ View</button>
+</div>
+
 <div id="content">
-  <div class="tab active" id="tab-report">
-    <div class="gcard">
-      <h3 style="color:var(--gold)">হিসাব রিপোর্ট</h3>
-      <select id="f-person" class="inp" onchange="renderReport()"></select>
-      <input type="month" id="f-month" class="inp" onchange="renderReport()">
-      <div style="display:flex; gap:5px;">
-        <button class="btn" style="background:var(--blue)" onclick="downloadPDF()">PDF</button>
-        <button class="btn" style="background:var(--green)" onclick="downloadCSV()">Excel/CSV</button>
-      </div>
+  <div class="tab active" id="tab-home">
+    <div id="admin-fields" style="display:none;" class="gcard">
+      <div style="font-size:12px;margin-bottom:8px;color:var(--blue);">➕ নতুন এন্ট্রি</div>
+      <select id="p-select" class="inp"></select>
+      <input type="date" id="e-date" class="inp">
+      <input type="number" id="e-qty" class="inp" placeholder="খাবার সংখ্যা">
+      <button class="btn btn-green" onclick="addEntry()">সেভ করুন</button>
     </div>
-    <div id="report-view" class="gcard"></div>
+    <div id="person-list"></div>
   </div>
 
-  <div class="tab" id="tab-home">
-    <div class="gcard">
-        <select id="p-select" class="inp"></select>
-        <input type="date" id="date" class="inp">
-        <input type="number" id="qty" class="inp" placeholder="খাবার সংখ্যা">
-        <input type="number" id="pay" class="inp" placeholder="টাকা জমা (যদি থাকে)">
-        <button class="btn" style="background:var(--gold)" onclick="saveData()">সেভ করুন</button>
+  <div class="tab" id="tab-persons">
+    <div id="admin-person" style="display:none;" class="gcard">
+      <input type="text" id="p-name" class="inp" placeholder="নাম">
+      <input type="tel" id="p-phone" class="inp" placeholder="ফোন">
+      <button class="btn btn-blue" onclick="addPerson()">ব্যক্তি যোগ করুন</button>
     </div>
+    <div id="all-persons"></div>
+  </div>
+
+  <div class="tab" id="tab-report">
+    <div class="gcard">
+      <div id="report-content"></div>
+    </div>
+    <button class="btn btn-gold" onclick="shareReport()">📤 রিপোর্ট শেয়ার</button>
   </div>
 </div>
 
-<div id="nav" style="position:fixed;bottom:0;width:100%;max-width:480px;display:flex;background:#060d18;">
-  <button class="btn" onclick="showTab('home')">🏠 ইনপুট</button>
-  <button class="btn" onclick="showTab('report')">📊 রিপোর্ট</button>
+<div id="nav">
+  <button class="nav-btn active" onclick="showTab('home', this)">🏠 হোম</button>
+  <button class="nav-btn" onclick="showTab('persons', this)">👥 ব্যক্তি</button>
+  <button class="nav-btn" onclick="showTab('report', this)">📊 রিপোর্ট</button>
 </div>
 
 <script>
-const supabase = supabase.createClient('https://tsmpceurtrsfrobplqvj.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRzbXBjZXVydHJzZnJvYnBscXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxMjk4MTIsImV4cCI6MjA5MDcwNTgxMn0.YM3APMc-8aY2ZTGOwRR-6JQP6_z8BdMl-YYjaG4ysJQ');
-let persons=[], entries=[], payments=[];
+// --- CONFIG (এখানে আপনার তথ্য দিন) ---
+const SB_URL = 'YOUR_SUPABASE_URL'; 
+const SB_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const supabase = supabase.createClient(SB_URL, SB_KEY);
+const ADMIN_PASS = "ghorer2024";
 
-async function loadData() {
-  const { data } = await supabase.from('app_data').select('*').eq('id', 1).single();
-  if(data) {
+let persons = [];
+let entries = [];
+let isAdmin = false;
+
+// --- CLOUD SYNC ---
+async function loadFromCloud() {
+  document.getElementById('loading-overlay').style.display = 'flex';
+  const { data, error } = await supabase.from('app_data').select('*').eq('id', 1).single();
+  if (data) {
     persons = JSON.parse(data.persons);
     entries = JSON.parse(data.entries);
-    payments = data.payments ? JSON.parse(data.payments) : [];
-    renderReport();
-    updateSelects();
+    renderAll();
+  }
+  document.getElementById('loading-overlay').style.display = 'none';
+}
+
+async function saveToCloud() {
+  await supabase.from('app_data').upsert({ 
+    id: 1, 
+    persons: JSON.stringify(persons), 
+    entries: JSON.stringify(entries) 
+  });
+  showToast('ক্লাউডে সেভ হয়েছে!');
+}
+
+// --- APP LOGIC ---
+function showTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+function handleAuth() {
+  if(isAdmin) { isAdmin = false; updateUI(); }
+  else {
+    let p = prompt("Admin পাসওয়ার্ড দিন:");
+    if(p === ADMIN_PASS) { isAdmin = true; updateUI(); }
+    else { alert("ভুল পাসওয়ার্ড!"); }
   }
 }
 
-async function saveData() {
-  const pid = document.getElementById('p-select').value;
-  const date = document.getElementById('date').value;
-  const qty = document.getElementById('qty').value;
-  const amt = document.getElementById('pay').value;
-
-  if(qty) entries.push({pid, qty, date});
-  if(amt) payments.push({pid, amt, date});
-
-  await supabase.from('app_data').upsert({ id:1, persons:JSON.stringify(persons), entries:JSON.stringify(entries), payments:JSON.stringify(payments) });
-  alert("সেভ হয়েছে!");
-  renderReport();
+function updateUI() {
+  document.getElementById('admin-fields').style.display = isAdmin ? 'block' : 'none';
+  document.getElementById('admin-person').style.display = isAdmin ? 'block' : 'none';
+  document.getElementById('mode-badge').textContent = isAdmin ? '🔐 Admin' : '👁️ View';
+  renderAll();
 }
 
-function renderReport() {
-  const pid = document.getElementById('f-person').value;
-  const month = document.getElementById('f-month').value;
-  
-  let html = `<table><tr><th>তারিখ</th><th>খাবার</th><th>জমা</th></tr>`;
-  let totalQty = 0, totalPay = 0;
-
-  // এখানে ফিল্টারিং লজিক
-  entries.forEach(e => {
-    if((pid === 'all' || e.pid == pid) && (!month || e.date.startsWith(month))) {
-        html += `<tr><td>${e.date}</td><td>${e.qty}</td><td>-</td></tr>`;
-        totalQty += Number(e.qty);
-    }
-  });
-  payments.forEach(p => {
-    if((pid === 'all' || p.pid == pid) && (!month || p.date.startsWith(month))) {
-        html += `<tr><td>${p.date}</td><td>-</td><td>${p.amt}</td></tr>`;
-        totalPay += Number(p.amt);
-    }
-  });
-  html += `</table><hr><b>মোট খাবার: ${totalQty} | মোট জমা: ${totalPay} টাকা</b>`;
-  document.getElementById('report-view').innerHTML = html;
+async function addPerson() {
+  let name = document.getElementById('p-name').value;
+  if(!name) return;
+  persons.push({id: Date.now(), name, phone: document.getElementById('p-phone').value});
+  await saveToCloud();
+  renderAll();
 }
 
-function downloadPDF() {
-    const el = document.getElementById('report-view');
-    html2pdf().from(el).save('Hishab.pdf');
+async function addEntry() {
+  let pid = document.getElementById('p-select').value;
+  let qty = document.getElementById('e-qty').value;
+  let date = document.getElementById('e-date').value;
+  if(!pid || !qty || !date) return;
+  entries.push({pid, qty, date});
+  await saveToCloud();
+  renderAll();
 }
 
-function downloadCSV() {
-    let csv = "তারিখ,খাবার,জমা\n";
-    // CSV তৈরির লজিক...
-    const blob = new Blob([csv], {type: 'text/csv'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'report.csv'; a.click();
+function renderAll() {
+  // Person Select
+  const sel = document.getElementById('p-select');
+  sel.innerHTML = persons.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+
+  // Home List
+  const list = document.getElementById('person-list');
+  list.innerHTML = persons.map(p => {
+    let count = entries.filter(e => e.pid == p.id).reduce((s,e)=>s+Number(e.qty), 0);
+    return `<div class="person-card"><div class="p-avatar">${p.name[0]}</div><div><b>${p.name}</b><br><small>${count} টি খাবার</small></div></div>`;
+  }).join('');
+
+  // Report
+  document.getElementById('report-content').innerHTML = persons.map(p => {
+    let count = entries.filter(e => e.pid == p.id).reduce((s,e)=>s+Number(e.qty), 0);
+    return `<div style="display:flex;justify-content:space-between;padding:5px 0;"><span>${p.name}</span><b>${count} টি</b></div>`;
+  }).join('');
 }
 
-function updateSelects() {
-    const s = document.getElementById('p-select');
-    const f = document.getElementById('f-person');
-    s.innerHTML = f.innerHTML = `<option value="all">সবাই</option>` + persons.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-}
-
-function showTab(t) {
-    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-    document.getElementById('tab-'+t).classList.add('active');
+function showToast(m) {
+  let t = document.getElementById('toast');
+  t.textContent = m; t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 2000);
 }
 
 // Init
-document.getElementById('date').value = new Date().toISOString().slice(0,10);
-loadData();
+document.getElementById('e-date').value = new Date().toISOString().slice(0,10);
+loadFromCloud();
 </script>
 </body>
 </html>
